@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webhook Tester - Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f6f9; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #2980b9; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; }
+        tr:hover { background: #f1f1f1; }
+        .endpoint-link { color: #2ecc71; font-weight: bold; text-decoration: none; }
+        .actions { text-align: right; }
+        .flash { padding: 10px; margin-bottom: 20px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🐒 Webhook Tester Dashboard</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <div class="card">
+        <h2>Create New Endpoint</h2>
+        <form action="{{ url_for('create_endpoint') }}" method="POST">
+            <div class="form-group">
+                <label for="name">Name (e.g., Stripe Payments)</label>
+                <input type="text" id="name" name="name" required placeholder="My Awesome Webhook">
+            </div>
+            <div class="form-group">
+                <label for="slug">Slug (URL Path)</label>
+                <input type="text" id="slug" name="slug" placeholder="stripe-payments (leave empty to auto-generate)">
+            </div>
+            <button type="submit" class="btn">Create Endpoint</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Your Endpoints</h2>
+        {% if endpoints %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>URL Path</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for endpoint in endpoints %}
+                <tr>
+                    <td>{{ endpoint['name'] }}</td>
+                    <td><code>/hook/{{ endpoint['slug'] }}</code></td>
+                    <td>{{ endpoint['created_at'] }}</td>
+                    <td class="actions">
+                        <a href="{{ url_for('view_endpoint', endpoint_id=endpoint['id']) }}" class="btn" style="background: #27ae60; padding: 5px 10px; font-size: 0.9em;">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #777;">No endpoints yet. Create one above!</p>
+        {% endif %}
+    </div>
+</body>
+</html>
