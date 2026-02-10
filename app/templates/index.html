@@ -4,9 +4,11 @@
     <title>Webhook Tester - Dashboard</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f6f9; color: #333; max-width: 900px; margin: 40px auto; padding: 20px; }
-        h1 { color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { color: #2c3e50; margin: 0; }
+        .logout { color: #e74c3c; text-decoration: none; font-weight: bold; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9em; }
         .btn:hover { background: #2980b9; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
@@ -15,15 +17,48 @@
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; font-weight: 600; }
         tr:hover { background: #f1f1f1; }
-        .endpoint-link { color: #2ecc71; font-weight: bold; text-decoration: none; }
         .actions { text-align: right; }
         .flash { padding: 10px; margin-bottom: 20px; border-radius: 4px; }
         .success { background: #d4edda; color: #155724; }
         .error { background: #f8d7da; color: #721c24; }
+        .slug-error { color: #e74c3c; font-size: 0.8em; margin-top: 5px; display: none; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-box input { flex-grow: 1; }
     </style>
+    <script>
+        function checkSlug() {
+            const slugInput = document.getElementById('slug');
+            const errorMsg = document.getElementById('slug-error');
+            const submitBtn = document.getElementById('create-btn');
+            const slug = slugInput.value;
+            
+            if (slug.length < 3) return;
+
+            fetch(`/api/check-slug?slug=${slug}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        errorMsg.style.display = 'block';
+                        errorMsg.innerText = '⚠️ Slug already exists!';
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = 0.5;
+                    } else {
+                        errorMsg.style.display = 'none';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = 1;
+                    }
+                });
+        }
+    </script>
 </head>
 <body>
-    <h1>🐒 Webhook Tester Dashboard</h1>
+    <div class="header">
+        <h1>🐒 Webhook Tester Dashboard</h1>
+        <div>
+            <span>Hello, {{ current_user.username }}!</span> | 
+            <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+        </div>
+    </div>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -42,14 +77,22 @@
             </div>
             <div class="form-group">
                 <label for="slug">Slug (URL Path)</label>
-                <input type="text" id="slug" name="slug" placeholder="stripe-payments (leave empty to auto-generate)">
+                <input type="text" id="slug" name="slug" placeholder="stripe-payments (leave empty to auto-generate)" onkeyup="checkSlug()">
+                <div id="slug-error" class="slug-error"></div>
             </div>
-            <button type="submit" class="btn">Create Endpoint</button>
+            <button type="submit" id="create-btn" class="btn">Create Endpoint</button>
         </form>
     </div>
 
     <div class="card">
-        <h2>Your Endpoints</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Your Endpoints</h2>
+            <form action="{{ url_for('index') }}" method="GET" class="search-box" style="margin: 0; width: 300px;">
+                <input type="text" name="q" placeholder="Search endpoints..." value="{{ query }}">
+                <button type="submit" class="btn">Search</button>
+            </form>
+        </div>
+
         {% if endpoints %}
         <table>
             <thead>
@@ -74,7 +117,7 @@
             </tbody>
         </table>
         {% else %}
-        <p style="text-align: center; color: #777;">No endpoints yet. Create one above!</p>
+        <p style="text-align: center; color: #777; padding: 20px;">No endpoints found.</p>
         {% endif %}
     </div>
 </body>

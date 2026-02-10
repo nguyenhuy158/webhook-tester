@@ -2,7 +2,7 @@ FROM python:3.9-alpine
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir flask gunicorn
+RUN pip install --no-cache-dir flask flask-login gunicorn werkzeug
 
 COPY ./app /app
 
