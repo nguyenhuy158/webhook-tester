@@ -221,6 +221,34 @@ def check_slug():
     
     return jsonify({"exists": bool(endpoint)})
 
+@app.route('/api/requests/<int:endpoint_id>')
+@login_required
+def get_new_requests(endpoint_id):
+    since_id = request.args.get('since_id', 0, type=int)
+    conn = get_db_connection()
+    # Get requests newer than since_id for this endpoint
+    requests_log = conn.execute('''
+        SELECT * FROM requests 
+        WHERE endpoint_id = ? AND id > ? 
+        ORDER BY timestamp DESC
+    ''', (endpoint_id, since_id)).fetchall()
+    conn.close()
+    
+    # Convert to list of dicts for JSON
+    results = []
+    for req in requests_log:
+        results.append({
+            "id": req['id'],
+            "method": req['method'],
+            "timestamp": req['timestamp'],
+            "remote_addr": req['remote_addr'],
+            "headers": req['headers'], # Already JSON string in DB
+            "query_params": req['query_params'], # Already JSON string in DB
+            "body": req['body']
+        })
+        
+    return jsonify(results)
+
 # Public Webhook Receiver (No Auth Needed)
 @app.route('/hook/<slug>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def webhook_receiver(slug):

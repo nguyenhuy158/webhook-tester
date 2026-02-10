@@ -16,15 +16,22 @@
         textarea { height: 100px; resize: vertical; }
         .btn { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
         .btn-danger { background: #e74c3c; }
-        .request-item { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .request-item { border-bottom: 1px solid #eee; padding: 15px 0; transition: background-color 0.5s ease; }
+        .request-item.new-item { background-color: #e8f8f5; animation: highlight 2s ease-out; }
+        @keyframes highlight { from { background-color: #d1f2eb; } to { background-color: transparent; } }
         .req-header { display: flex; justify-content: space-between; cursor: pointer; font-weight: bold; }
         .method { padding: 2px 6px; border-radius: 3px; font-size: 0.8em; margin-right: 10px; color: white; }
         .POST { background: #27ae60; } .GET { background: #2980b9; } .PUT { background: #f39c12; } .DELETE { background: #c0392b; }
         .req-details { display: none; margin-top: 10px; background: #fafafa; padding: 15px; border-radius: 4px; font-size: 0.9em; }
         pre { background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
         .timestamp { color: #95a5a6; font-size: 0.8em; font-weight: normal; }
+        .loading-badge { display: none; background: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 10px; }
     </style>
     <script>
+        let lastId = {{ requests[0]['id'] if requests else 0 }};
+        const endpointId = {{ endpoint['id'] }};
+        let pollingInterval;
+
         function toggle(id) {
             var x = document.getElementById(id);
             x.style.display = (x.style.display === "block") ? "none" : "block";
@@ -34,18 +41,95 @@
             navigator.clipboard.writeText(copyText.innerText);
             alert("Copied URL to clipboard!");
         }
+
+        // Format JSON safely
+        function formatJsonStr(str) {
+            try {
+                return JSON.stringify(JSON.parse(str), null, 2);
+            } catch (e) {
+                return str;
+            }
+        }
+
+        function pollNewRequests() {
+            const badge = document.getElementById('loading-badge');
+            // badge.style.display = 'inline-block'; // Show if desired
+
+            fetch(`/api/requests/${endpointId}?since_id=${lastId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const container = document.getElementById('requests-container');
+                        const emptyMsg = document.getElementById('empty-msg');
+                        if (emptyMsg) emptyMsg.style.display = 'none';
+
+                        // Process from oldest to newest to prepend correctly (or reverse if API returns newest first)
+                        // API returns DESC (newest first), so iterate backwards to add older ones first? No.
+                        // Actually, we want to add them to the TOP.
+                        // If API returns [newest, older, oldest], we should reverse to add oldest first if appending, 
+                        // BUT since we are prepending, we should iterate in reverse order (oldest to newest) 
+                        // so that the newest ends up at the very top.
+                        
+                        // Data from API is DESC (Newest is index 0).
+                        // Example: [ID 10, ID 9]. Last ID was 8.
+                        // We want 10 at top, then 9 below it.
+                        // So iterate reverse: Add 9 (prepend), then Add 10 (prepend). Result: 10, 9, ...
+                        
+                        for (let i = data.length - 1; i >= 0; i--) {
+                            const req = data[i];
+                            if (req.id > lastId) {
+                                lastId = req.id;
+                                addRequestToDom(req);
+                            }
+                        }
+                    }
+                    // badge.style.display = 'none';
+                })
+                .catch(err => console.error("Polling error:", err));
+        }
+
+        function addRequestToDom(req) {
+            const container = document.getElementById('requests-container');
+            const div = document.createElement('div');
+            div.className = 'request-item new-item';
+            div.innerHTML = `
+                <div class="req-header" onclick="toggle('req-${req.id}')">
+                    <span>
+                        <span class="method ${req.method}">${req.method}</span>
+                        <span class="timestamp">${req.timestamp}</span>
+                    </span>
+                    <span style="font-size: 0.8em; color: #7f8c8d;">${req.remote_addr} ▼</span>
+                </div>
+                <div id="req-${req.id}" class="req-details">
+                    <h4>Headers</h4>
+                    <pre>${formatJsonStr(req.headers)}</pre>
+                    
+                    <h4>Query Params</h4>
+                    <pre>${formatJsonStr(req.query_params)}</pre>
+
+                    <h4>Body</h4>
+                    <pre>${formatJsonStr(req.body)}</pre>
+                </div>
+            `;
+            container.insertBefore(div, container.firstChild);
+        }
+
+        // Start polling every 3 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+            pollingInterval = setInterval(pollNewRequests, 3000);
+        });
     </script>
 </head>
 <body>
     <div class="header">
-        <h1>{{ endpoint['name'] }}</h1>
+        <h1>{{ endpoint['name'] }} <span id="loading-badge" class="loading-badge">Syncing...</span></h1>
         <a href="{{ url_for('index') }}" class="back-link">← Back to Dashboard</a>
     </div>
 
     <div class="card">
         <h3>Webhook URL</h3>
         <div class="url-box">
-            <span id="webhookUrl">https://webhook-tester.huyab.click/hook/{{ endpoint['slug'] }}</span>
+            <span id="webhookUrl">https://webhooktester.huyab.click/hook/{{ endpoint['slug'] }}</span>
             <button class="copy-btn" onclick="copyUrl()">Copy</button>
         </div>
 
@@ -77,37 +161,39 @@
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">Request History (Last 50)</h3>
+            <h3 style="margin: 0;">Request History (Live Update)</h3>
             <form action="{{ url_for('clear_requests', endpoint_id=endpoint['id']) }}" method="POST" onsubmit="return confirm('Clear all history for this endpoint?');">
                 <button type="submit" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9em;">Clear History</button>
             </form>
         </div>
 
-        {% if requests %}
-            {% for req in requests %}
-            <div class="request-item">
-                <div class="req-header" onclick="toggle('req-{{ req.id }}')">
-                    <span>
-                        <span class="method {{ req.method }}">{{ req.method }}</span>
-                        <span class="timestamp">{{ req.timestamp }}</span>
-                    </span>
-                    <span style="font-size: 0.8em; color: #7f8c8d;">{{ req.remote_addr }} ▼</span>
-                </div>
-                <div id="req-{{ req.id }}" class="req-details">
-                    <h4>Headers</h4>
-                    <pre>{{ req.headers | format_json }}</pre>
-                    
-                    <h4>Query Params</h4>
-                    <pre>{{ req.query_params | format_json }}</pre>
+        <div id="requests-container">
+            {% if requests %}
+                {% for req in requests %}
+                <div class="request-item">
+                    <div class="req-header" onclick="toggle('req-{{ req.id }}')">
+                        <span>
+                            <span class="method {{ req.method }}">{{ req.method }}</span>
+                            <span class="timestamp">{{ req.timestamp }}</span>
+                        </span>
+                        <span style="font-size: 0.8em; color: #7f8c8d;">{{ req.remote_addr }} ▼</span>
+                    </div>
+                    <div id="req-{{ req.id }}" class="req-details">
+                        <h4>Headers</h4>
+                        <pre>{{ req.headers | format_json }}</pre>
+                        
+                        <h4>Query Params</h4>
+                        <pre>{{ req.query_params | format_json }}</pre>
 
-                    <h4>Body</h4>
-                    <pre>{{ req.body | format_json }}</pre>
+                        <h4>Body</h4>
+                        <pre>{{ req.body | format_json }}</pre>
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p style="color: #777; text-align: center; padding: 20px;">No requests received yet. Send a POST request to the URL above!</p>
-        {% endif %}
+                {% endfor %}
+            {% else %}
+                <p id="empty-msg" style="color: #777; text-align: center; padding: 20px;">No requests received yet. Send a POST request to the URL above!</p>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>
