@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 from tortoise.expressions import Q
 
 from app.adapters.outbound.persistence.models import EndpointModel
@@ -50,6 +48,7 @@ class TortoiseEndpointRepository(EndpointRepository):
 
     async def update(self, endpoint: Endpoint) -> Endpoint:
         await EndpointModel.filter(id=endpoint.id).update(
+            name=endpoint.name,
             response_status=endpoint.response_status,
             response_body=endpoint.response_body,
             response_content_type=endpoint.response_content_type,

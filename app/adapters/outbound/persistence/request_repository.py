@@ -8,13 +8,21 @@ from app.domain.ports.repositories.request_repository import RequestRepository
 
 
 def _to_entity(m: RequestModel) -> WebhookRequest:
+    try:
+        headers = json.loads(m.headers)
+    except (json.JSONDecodeError, TypeError):
+        headers = {}
+    try:
+        query_params = json.loads(m.query_params)
+    except (json.JSONDecodeError, TypeError):
+        query_params = {}
     return WebhookRequest(
         id=m.id,
         endpoint_id=m.endpoint_id,
         method=m.method,
-        headers=json.loads(m.headers),
+        headers=headers,
         body=m.body,
-        query_params=json.loads(m.query_params),
+        query_params=query_params,
         remote_addr=m.remote_addr,
         timestamp=m.timestamp,
     )
