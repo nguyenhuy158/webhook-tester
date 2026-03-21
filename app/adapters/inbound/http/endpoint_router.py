@@ -3,12 +3,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from app.adapters.outbound.persistence.endpoint_repository import TortoiseEndpointRepository
 from app.config.dependencies import (
     get_create_endpoint_use_case,
     get_current_user,
     get_delete_endpoint_use_case,
+    get_endpoint_repo,
     get_list_endpoints_use_case,
+    get_request_repo,
     get_update_endpoint_use_case,
 )
 from app.domain.entities.user import User
@@ -98,7 +99,16 @@ async def delete_endpoint(
 async def check_slug(
     slug: str,
     current_user: User = Depends(get_current_user),
+    repo=Depends(get_endpoint_repo),
 ):
-    repo = TortoiseEndpointRepository()
     exists = await repo.slug_exists(slug)
     return {"available": not exists}
+
+
+@router.delete("/endpoints/{endpoint_id}/requests", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_requests(
+    endpoint_id: int,
+    current_user: User = Depends(get_current_user),
+    repo=Depends(get_request_repo),
+):
+    await repo.delete_by_endpoint(endpoint_id)
