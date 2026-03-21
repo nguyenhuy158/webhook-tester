@@ -1,11 +1,12 @@
-FROM python:3.9-alpine
+FROM python:3.11-alpine
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir flask flask-login gunicorn werkzeug
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./app /app
+COPY app/ ./app/
 
-EXPOSE 5000
+EXPOSE 8000
 
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
