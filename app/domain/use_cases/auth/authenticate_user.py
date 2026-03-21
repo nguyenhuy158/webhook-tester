@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from app.domain.entities.user import User
+from app.domain.exceptions import InvalidCredentialsError
 from app.domain.ports.repositories.user_repository import UserRepository
 from app.domain.ports.services.auth_port import AuthService
-
-
-class InvalidCredentialsError(Exception):
-    pass
 
 
 class AuthenticateUserUseCase:

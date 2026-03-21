@@ -2,37 +2,12 @@ from __future__ import annotations
 
 import asyncio
 
+from app.domain.entities.incoming_request import EndpointResponse, IncomingRequest
 from app.domain.entities.webhook_request import WebhookRequest
+from app.domain.exceptions import EndpointNotFoundError
 from app.domain.ports.repositories.endpoint_repository import EndpointRepository
 from app.domain.ports.repositories.request_repository import RequestRepository
 from app.domain.ports.services.ws_broadcaster import WebSocketBroadcaster
-
-
-class EndpointNotFoundError(Exception):
-    pass
-
-
-class IncomingRequest:
-    def __init__(
-        self,
-        method: str,
-        headers: dict,
-        body: str,
-        query_params: dict,
-        remote_addr: str,
-    ) -> None:
-        self.method = method
-        self.headers = headers
-        self.body = body
-        self.query_params = query_params
-        self.remote_addr = remote_addr
-
-
-class EndpointResponse:
-    def __init__(self, status: int, body: str, content_type: str) -> None:
-        self.status = status
-        self.body = body
-        self.content_type = content_type
 
 
 class ReceiveWebhookUseCase:
@@ -61,7 +36,6 @@ class ReceiveWebhookUseCase:
         )
         saved = await self._request_repo.save(request)
 
-        # Broadcast to any WebSocket clients watching this endpoint
         await self._ws_broadcaster.broadcast(
             endpoint.id,
             {

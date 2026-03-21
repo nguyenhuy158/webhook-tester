@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 from app.domain.entities.endpoint import Endpoint
+from app.domain.exceptions import EndpointNotFoundError
 from app.domain.ports.repositories.endpoint_repository import EndpointRepository
-
-
-class EndpointNotFoundError(Exception):
-    pass
 
 
 class UpdateEndpointUseCase:
