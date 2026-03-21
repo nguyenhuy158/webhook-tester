@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -18,7 +18,7 @@ class JWTService(AuthService):
     def create_token(self, user_id: int) -> str:
         payload = {
             "sub": str(user_id),
-            "exp": datetime.utcnow() + timedelta(minutes=self._expire_minutes),
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=self._expire_minutes),
         }
         return jwt.encode(payload, self._secret, algorithm=self._algorithm)
 
