@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Cookie, WebSocket, WebSocketDisconnect
 
-from app.config.dependencies import get_auth_service, get_user_repo
+from app.config.dependencies import get_auth_service
 from app.domain.ports.services.ws_broadcaster import WebSocketBroadcaster
 
 router = APIRouter(tags=["websocket"])
