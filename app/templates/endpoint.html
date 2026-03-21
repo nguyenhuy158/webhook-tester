@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Endpoint Details - {{ endpoint['name'] }}</title>
+    <title>Endpoint Details - {{ endpoint.name }}</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f4f6f9; color: #333; max-width: 1000px; margin: 40px auto; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; }
@@ -16,155 +16,68 @@
         textarea { height: 100px; resize: vertical; }
         .btn { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
         .btn-danger { background: #e74c3c; }
-        .request-item { border-bottom: 1px solid #eee; padding: 15px 0; transition: background-color 0.5s ease; }
-        .request-item.new-item { background-color: #e8f8f5; animation: highlight 2s ease-out; }
+        .request-item { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .request-item.new-item { animation: highlight 2s ease-out; }
         @keyframes highlight { from { background-color: #d1f2eb; } to { background-color: transparent; } }
         .req-header { display: flex; justify-content: space-between; cursor: pointer; font-weight: bold; }
         .method { padding: 2px 6px; border-radius: 3px; font-size: 0.8em; margin-right: 10px; color: white; }
-        .POST { background: #27ae60; } .GET { background: #2980b9; } .PUT { background: #f39c12; } .DELETE { background: #c0392b; }
+        .POST { background: #27ae60; } .GET { background: #2980b9; } .PUT { background: #f39c12; } .DELETE { background: #c0392b; } .PATCH { background: #8e44ad; }
         .req-details { display: none; margin-top: 10px; background: #fafafa; padding: 15px; border-radius: 4px; font-size: 0.9em; }
         pre { background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
         .timestamp { color: #95a5a6; font-size: 0.8em; font-weight: normal; }
-        .loading-badge { display: none; background: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 10px; }
+        .ws-status { font-size: 0.75em; padding: 2px 8px; border-radius: 10px; margin-left: 10px; }
+        .ws-connected { background: #d4edda; color: #155724; }
+        .ws-disconnected { background: #f8d7da; color: #721c24; }
+        .alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; display: none; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
     </style>
-    <script>
-        let lastId = {{ requests[0]['id'] if requests else 0 }};
-        const endpointId = {{ endpoint['id'] }};
-        let pollingInterval;
-
-        function toggle(id) {
-            var x = document.getElementById(id);
-            x.style.display = (x.style.display === "block") ? "none" : "block";
-        }
-        function copyUrl() {
-            var copyText = document.getElementById("webhookUrl");
-            navigator.clipboard.writeText(copyText.innerText);
-            alert("Copied URL to clipboard!");
-        }
-
-        // Format JSON safely
-        function formatJsonStr(str) {
-            try {
-                return JSON.stringify(JSON.parse(str), null, 2);
-            } catch (e) {
-                return str;
-            }
-        }
-
-        function pollNewRequests() {
-            const badge = document.getElementById('loading-badge');
-            // badge.style.display = 'inline-block'; // Show if desired
-
-            fetch(`/api/requests/${endpointId}?since_id=${lastId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length > 0) {
-                        const container = document.getElementById('requests-container');
-                        const emptyMsg = document.getElementById('empty-msg');
-                        if (emptyMsg) emptyMsg.style.display = 'none';
-
-                        // Process from oldest to newest to prepend correctly (or reverse if API returns newest first)
-                        // API returns DESC (newest first), so iterate backwards to add older ones first? No.
-                        // Actually, we want to add them to the TOP.
-                        // If API returns [newest, older, oldest], we should reverse to add oldest first if appending, 
-                        // BUT since we are prepending, we should iterate in reverse order (oldest to newest) 
-                        // so that the newest ends up at the very top.
-                        
-                        // Data from API is DESC (Newest is index 0).
-                        // Example: [ID 10, ID 9]. Last ID was 8.
-                        // We want 10 at top, then 9 below it.
-                        // So iterate reverse: Add 9 (prepend), then Add 10 (prepend). Result: 10, 9, ...
-                        
-                        for (let i = data.length - 1; i >= 0; i--) {
-                            const req = data[i];
-                            if (req.id > lastId) {
-                                lastId = req.id;
-                                addRequestToDom(req);
-                            }
-                        }
-                    }
-                    // badge.style.display = 'none';
-                })
-                .catch(err => console.error("Polling error:", err));
-        }
-
-        function addRequestToDom(req) {
-            const container = document.getElementById('requests-container');
-            const div = document.createElement('div');
-            div.className = 'request-item new-item';
-            div.innerHTML = `
-                <div class="req-header" onclick="toggle('req-${req.id}')">
-                    <span>
-                        <span class="method ${req.method}">${req.method}</span>
-                        <span class="timestamp">${req.timestamp}</span>
-                    </span>
-                    <span style="font-size: 0.8em; color: #7f8c8d;">${req.remote_addr} ▼</span>
-                </div>
-                <div id="req-${req.id}" class="req-details">
-                    <h4>Headers</h4>
-                    <pre>${formatJsonStr(req.headers)}</pre>
-                    
-                    <h4>Query Params</h4>
-                    <pre>${formatJsonStr(req.query_params)}</pre>
-
-                    <h4>Body</h4>
-                    <pre>${formatJsonStr(req.body)}</pre>
-                </div>
-            `;
-            container.insertBefore(div, container.firstChild);
-        }
-
-        // Start polling every 3 seconds
-        document.addEventListener('DOMContentLoaded', () => {
-            pollingInterval = setInterval(pollNewRequests, 3000);
-        });
-    </script>
 </head>
 <body>
     <div class="header">
-        <h1>{{ endpoint['name'] }} <span id="loading-badge" class="loading-badge">Syncing...</span></h1>
-        <a href="{{ url_for('index') }}" class="back-link">← Back to Dashboard</a>
+        <h1>
+            {{ endpoint.name }}
+            <span id="ws-status" class="ws-status ws-disconnected">Connecting...</span>
+        </h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
     </div>
 
     <div class="card">
         <h3>Webhook URL</h3>
         <div class="url-box">
-            <span id="webhookUrl">https://webhooktester.huyab.click/hook/{{ endpoint['slug'] }}</span>
+            <span id="webhookUrl">{{ request.url.scheme }}://{{ request.url.netloc }}/hook/{{ endpoint.slug }}</span>
             <button class="copy-btn" onclick="copyUrl()">Copy</button>
         </div>
 
         <h3>Response Settings</h3>
-        <form action="{{ url_for('update_endpoint', endpoint_id=endpoint['id']) }}" method="POST">
-            <div class="settings-form">
-                <div class="form-group">
-                    <label>Status Code (e.g., 200, 404)</label>
-                    <input type="number" name="response_status" value="{{ endpoint['response_status'] }}" required>
-                </div>
-                <div class="form-group">
-                    <label>Content Type (e.g., application/json)</label>
-                    <input type="text" name="response_content_type" value="{{ endpoint['response_content_type'] }}">
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label>Response Body (JSON or Text)</label>
-                    <textarea name="response_body">{{ endpoint['response_body'] }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Delay (ms) - Simulate slow response</label>
-                    <input type="number" name="delay_ms" value="{{ endpoint['delay_ms'] }}">
-                </div>
-                <div class="form-group" style="display: flex; align-items: flex-end;">
-                    <button type="submit" class="btn">Save Settings</button>
-                </div>
+        <div id="settings-alert" class="alert"></div>
+        <div class="settings-form">
+            <div class="form-group">
+                <label>Status Code</label>
+                <input type="number" id="response_status" value="{{ endpoint.response_status }}">
             </div>
-        </form>
+            <div class="form-group">
+                <label>Content Type</label>
+                <input type="text" id="response_content_type" value="{{ endpoint.response_content_type }}">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Response Body</label>
+                <textarea id="response_body">{{ endpoint.response_body }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Delay (ms)</label>
+                <input type="number" id="delay_ms" value="{{ endpoint.delay_ms }}">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
     </div>
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">Request History (Live Update)</h3>
-            <form action="{{ url_for('clear_requests', endpoint_id=endpoint['id']) }}" method="POST" onsubmit="return confirm('Clear all history for this endpoint?');">
-                <button type="submit" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9em;">Clear History</button>
-            </form>
+            <h3 style="margin: 0;">Request History (Live)</h3>
+            <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9em;" onclick="clearHistory()">Clear History</button>
         </div>
 
         <div id="requests-container">
@@ -180,20 +93,115 @@
                     </div>
                     <div id="req-{{ req.id }}" class="req-details">
                         <h4>Headers</h4>
-                        <pre>{{ req.headers | format_json }}</pre>
-                        
+                        <pre>{{ req.headers | tojson(indent=2) }}</pre>
                         <h4>Query Params</h4>
-                        <pre>{{ req.query_params | format_json }}</pre>
-
+                        <pre>{{ req.query_params | tojson(indent=2) }}</pre>
                         <h4>Body</h4>
-                        <pre>{{ req.body | format_json }}</pre>
+                        <pre>{{ req.body }}</pre>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <p id="empty-msg" style="color: #777; text-align: center; padding: 20px;">No requests received yet. Send a POST request to the URL above!</p>
+                <p id="empty-msg" style="color: #777; text-align: center; padding: 20px;">No requests received yet. Send a request to the URL above!</p>
             {% endif %}
         </div>
     </div>
+
+    <script>
+        const endpointId = {{ endpoint.id }};
+        let ws;
+        let reconnectDelay = 1000;
+
+        function toggle(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function copyUrl() {
+            navigator.clipboard.writeText(document.getElementById('webhookUrl').innerText);
+            alert('Copied URL to clipboard!');
+        }
+
+        function formatJson(str) {
+            try { return JSON.stringify(JSON.parse(str), null, 2); } catch(e) { return str; }
+        }
+
+        function addRequestToDom(req) {
+            const container = document.getElementById('requests-container');
+            const emptyMsg = document.getElementById('empty-msg');
+            if (emptyMsg) emptyMsg.style.display = 'none';
+
+            const div = document.createElement('div');
+            div.className = 'request-item new-item';
+            const headersStr = typeof req.headers === 'object' ? JSON.stringify(req.headers, null, 2) : String(req.headers);
+            const paramsStr = typeof req.query_params === 'object' ? JSON.stringify(req.query_params, null, 2) : String(req.query_params);
+            div.innerHTML = `
+                <div class="req-header" onclick="toggle('req-${req.id}')">
+                    <span>
+                        <span class="method ${req.method}">${req.method}</span>
+                        <span class="timestamp">${req.timestamp || ''}</span>
+                    </span>
+                    <span style="font-size: 0.8em; color: #7f8c8d;">${req.remote_addr} ▼</span>
+                </div>
+                <div id="req-${req.id}" class="req-details">
+                    <h4>Headers</h4><pre>${headersStr}</pre>
+                    <h4>Query Params</h4><pre>${paramsStr}</pre>
+                    <h4>Body</h4><pre>${formatJson(req.body || '')}</pre>
+                </div>`;
+            container.insertBefore(div, container.firstChild);
+        }
+
+        function connectWebSocket() {
+            const wsScheme = location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${wsScheme}://${location.host}/ws/endpoint/${endpointId}`);
+            const statusEl = document.getElementById('ws-status');
+
+            ws.onopen = () => {
+                statusEl.textContent = 'Live';
+                statusEl.className = 'ws-status ws-connected';
+                reconnectDelay = 1000;
+            };
+            ws.onmessage = (event) => {
+                const req = JSON.parse(event.data);
+                addRequestToDom(req);
+            };
+            ws.onclose = () => {
+                statusEl.textContent = 'Reconnecting...';
+                statusEl.className = 'ws-status ws-disconnected';
+                setTimeout(connectWebSocket, reconnectDelay);
+                reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+            };
+            ws.onerror = () => ws.close();
+        }
+
+        async function saveSettings() {
+            const alertEl = document.getElementById('settings-alert');
+            const resp = await fetch(`/api/endpoints/${endpointId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    response_status: parseInt(document.getElementById('response_status').value),
+                    response_body: document.getElementById('response_body').value,
+                    response_content_type: document.getElementById('response_content_type').value,
+                    delay_ms: parseInt(document.getElementById('delay_ms').value) || 0
+                })
+            });
+            alertEl.className = 'alert ' + (resp.ok ? 'alert-success' : 'alert-error');
+            alertEl.textContent = resp.ok ? 'Settings saved!' : 'Failed to save settings.';
+            alertEl.style.display = 'block';
+            setTimeout(() => alertEl.style.display = 'none', 3000);
+        }
+
+        async function clearHistory() {
+            if (!confirm('Clear all request history for this endpoint?')) return;
+            const resp = await fetch(`/api/endpoints/${endpointId}/requests`, { method: 'DELETE' });
+            if (resp.ok) {
+                document.getElementById('requests-container').innerHTML =
+                    '<p id="empty-msg" style="color:#777;text-align:center;padding:20px;">No requests received yet.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', connectWebSocket);
+    </script>
 </body>
 </html>

@@ -10,3 +10,4 @@ webhook.db
 instance/
 .idea/
 .vscode/
+.worktrees/
