@@ -19,6 +19,7 @@ async def init_tortoise(db_url: str = settings.database_url) -> None:
     await Tortoise.init(
         db_url=db_url,
         modules={"models": ["app.adapters.outbound.persistence.models"]},
+        _enable_global_fallback=True,  # Required for Tortoise ORM 1.x global state
     )
     await Tortoise.generate_schemas(safe=True)
 
