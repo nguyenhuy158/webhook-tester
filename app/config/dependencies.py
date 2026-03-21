@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import Cookie, HTTPException, Request, status
+from fastapi import Cookie, HTTPException, status
 
 from app.adapters.outbound.persistence.endpoint_repository import TortoiseEndpointRepository
 from app.adapters.outbound.persistence.request_repository import TortoiseRequestRepository
@@ -72,14 +72,12 @@ def get_receive_webhook_use_case(ws_broadcaster=None) -> ReceiveWebhookUseCase:
 # ── Auth dependency ───────────────────────────────────────────────────────────
 
 async def get_current_user(
-    request: Request,
     access_token: str | None = Cookie(default=None),
 ) -> User:
-    token = access_token or request.cookies.get("access_token")
-    if not token:
+    if not access_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     auth_service = get_auth_service()
-    user_id = auth_service.decode_token(token)
+    user_id = auth_service.decode_token(access_token)
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     user_repo = get_user_repo()

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from tortoise import Tortoise
 
+from app.config.settings import settings
+
 TORTOISE_ORM = {
-    "connections": {"default": "sqlite://webhook.db"},
+    "connections": {"default": settings.database_url},
     "apps": {
         "models": {
             "models": ["app.adapters.outbound.persistence.models", "aerich.models"],
@@ -13,7 +15,7 @@ TORTOISE_ORM = {
 }
 
 
-async def init_tortoise(db_url: str = "sqlite://webhook.db") -> None:
+async def init_tortoise(db_url: str = settings.database_url) -> None:
     await Tortoise.init(
         db_url=db_url,
         modules={"models": ["app.adapters.outbound.persistence.models"]},
