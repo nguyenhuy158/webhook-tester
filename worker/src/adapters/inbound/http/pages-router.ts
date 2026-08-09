@@ -21,7 +21,9 @@ pagesRouter.get("/logout", (c) => {
 pagesRouter.get("/", requirePageUser, async (c) => {
   const search = c.req.query("search") ?? "";
   const endpoints = await getListEndpointsUseCase(c.env).execute(search);
-  return c.html(indexPage({ user: c.get("user"), endpoints, search }));
+  return c.html(
+    indexPage({ user: c.get("user"), endpoints, search, origin: new URL(c.req.url).origin }),
+  );
 });
 
 pagesRouter.get("/endpoint/:endpointId", requirePageUser, async (c) => {
