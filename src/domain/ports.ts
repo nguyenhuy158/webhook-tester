@@ -1,12 +1,16 @@
 import type { Endpoint, ExternalIdentity, User, WebhookRequest } from "./entities";
 
 export interface EndpointRepository {
-  findById(endpointId: number): Promise<Endpoint | null>;
+  /** Returns null when the endpoint belongs to somebody else, so callers cannot
+   *  tell "not yours" apart from "does not exist". */
+  findById(endpointId: number, ownerId: number): Promise<Endpoint | null>;
+  /** Not scoped: whoever calls a webhook is not signed in. */
   findBySlug(slug: string): Promise<Endpoint | null>;
-  listAll(search?: string): Promise<Endpoint[]>;
+  listByOwner(ownerId: number, search?: string): Promise<Endpoint[]>;
   create(endpoint: Endpoint): Promise<Endpoint>;
   update(endpoint: Endpoint): Promise<Endpoint>;
-  delete(endpointId: number): Promise<void>;
+  delete(endpointId: number, ownerId: number): Promise<void>;
+  /** Global: slugs share one URL namespace across every account. */
   slugExists(slug: string): Promise<boolean>;
 }
 

@@ -11,6 +11,7 @@ import {
   RegisterUserUseCase,
 } from "../domain/use-cases/auth";
 import {
+  ClearRequestsUseCase,
   CreateEndpointUseCase,
   DeleteEndpointUseCase,
   ListEndpointsUseCase,
@@ -43,6 +44,9 @@ export const getCreateEndpointUseCase = (env: Env) => new CreateEndpointUseCase(
 export const getUpdateEndpointUseCase = (env: Env) => new UpdateEndpointUseCase(getEndpointRepo(env));
 
 export const getDeleteEndpointUseCase = (env: Env) => new DeleteEndpointUseCase(getEndpointRepo(env));
+
+export const getClearRequestsUseCase = (env: Env) =>
+  new ClearRequestsUseCase(getEndpointRepo(env), getRequestRepo(env));
 
 export const getAuthUseCase = (env: Env) =>
   new AuthenticateUserUseCase(getUserRepo(env), getAuthService(env));

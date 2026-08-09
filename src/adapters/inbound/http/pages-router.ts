@@ -31,7 +31,7 @@ pagesRouter.get("/logout", (c) => {
 
 pagesRouter.get("/", requirePageUser, async (c) => {
   const search = c.req.query("search") ?? "";
-  const endpoints = await getListEndpointsUseCase(c.env).execute(search);
+  const endpoints = await getListEndpointsUseCase(c.env).execute(c.get("user").id!, search);
   return c.html(
     indexPage({ user: c.get("user"), endpoints, search, origin: new URL(c.req.url).origin }),
   );
@@ -41,7 +41,9 @@ pagesRouter.get("/endpoint/:endpointId", requirePageUser, async (c) => {
   const endpointId = Number.parseInt(c.req.param("endpointId"), 10);
   if (Number.isNaN(endpointId)) return c.text("Endpoint not found", 404);
 
-  const endpoint = await getEndpointRepo(c.env).findById(endpointId);
+  // Scoped to the viewer: another account's endpoint is indistinguishable from
+  // one that does not exist.
+  const endpoint = await getEndpointRepo(c.env).findById(endpointId, c.get("user").id!);
   if (!endpoint) return c.text(`Endpoint ${endpointId} not found`, 404);
 
   const requests = await getRequestRepo(c.env).listByEndpoint(endpointId, 50);

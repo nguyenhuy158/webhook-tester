@@ -3,6 +3,7 @@ import type { EndpointRepository } from "../../../domain/ports";
 
 interface EndpointRow {
   id: number;
+  user_id: number | null;
   name: string;
   slug: string;
   response_status: number;
@@ -15,6 +16,7 @@ interface EndpointRow {
 function toEntity(row: EndpointRow): Endpoint {
   return {
     id: row.id,
+    userId: row.user_id ?? 0,
     name: row.name,
     slug: row.slug,
     responseStatus: row.response_status,
@@ -28,14 +30,15 @@ function toEntity(row: EndpointRow): Endpoint {
 export class D1EndpointRepository implements EndpointRepository {
   constructor(private readonly db: D1Database) {}
 
-  async findById(endpointId: number): Promise<Endpoint | null> {
+  async findById(endpointId: number, ownerId: number): Promise<Endpoint | null> {
     const row = await this.db
-      .prepare("SELECT * FROM webhook_tester_endpoints WHERE id = ?")
-      .bind(endpointId)
+      .prepare("SELECT * FROM webhook_tester_endpoints WHERE id = ? AND user_id = ?")
+      .bind(endpointId, ownerId)
       .first<EndpointRow>();
     return row ? toEntity(row) : null;
   }
 
+  /** Deliberately unscoped: the caller of a webhook is not signed in. */
   async findBySlug(slug: string): Promise<Endpoint | null> {
     const row = await this.db
       .prepare("SELECT * FROM webhook_tester_endpoints WHERE slug = ?")
@@ -44,14 +47,20 @@ export class D1EndpointRepository implements EndpointRepository {
     return row ? toEntity(row) : null;
   }
 
-  async listAll(search = ""): Promise<Endpoint[]> {
+  async listByOwner(ownerId: number, search = ""): Promise<Endpoint[]> {
     const statement = search
       ? this.db
           .prepare(
-            "SELECT * FROM webhook_tester_endpoints WHERE name LIKE ?1 OR slug LIKE ?1 ORDER BY created_at DESC, id DESC",
+            `SELECT * FROM webhook_tester_endpoints
+              WHERE user_id = ?1 AND (name LIKE ?2 OR slug LIKE ?2)
+              ORDER BY created_at DESC, id DESC`,
           )
-          .bind(`%${search}%`)
-      : this.db.prepare("SELECT * FROM webhook_tester_endpoints ORDER BY created_at DESC, id DESC");
+          .bind(ownerId, `%${search}%`)
+      : this.db
+          .prepare(
+            "SELECT * FROM webhook_tester_endpoints WHERE user_id = ? ORDER BY created_at DESC, id DESC",
+          )
+          .bind(ownerId);
     const { results } = await statement.all<EndpointRow>();
     return results.map(toEntity);
   }
@@ -59,10 +68,12 @@ export class D1EndpointRepository implements EndpointRepository {
   async create(endpoint: Endpoint): Promise<Endpoint> {
     const row = await this.db
       .prepare(
-        `INSERT INTO webhook_tester_endpoints (name, slug, response_status, response_body, response_content_type, delay_ms)
-         VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
+        `INSERT INTO webhook_tester_endpoints
+           (user_id, name, slug, response_status, response_body, response_content_type, delay_ms)
+         VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`,
       )
       .bind(
+        endpoint.userId,
         endpoint.name,
         endpoint.slug,
         endpoint.responseStatus,
@@ -80,7 +91,7 @@ export class D1EndpointRepository implements EndpointRepository {
       .prepare(
         `UPDATE webhook_tester_endpoints
             SET name = ?, response_status = ?, response_body = ?, response_content_type = ?, delay_ms = ?
-          WHERE id = ? RETURNING *`,
+          WHERE id = ? AND user_id = ? RETURNING *`,
       )
       .bind(
         endpoint.name,
@@ -89,21 +100,31 @@ export class D1EndpointRepository implements EndpointRepository {
         endpoint.responseContentType,
         endpoint.delayMs,
         endpoint.id,
+        endpoint.userId,
       )
       .first<EndpointRow>();
     if (!row) throw new Error(`Endpoint ${endpoint.id} disappeared during update`);
     return toEntity(row);
   }
 
-  async delete(endpointId: number): Promise<void> {
+  async delete(endpointId: number, ownerId: number): Promise<void> {
     // D1 does not enforce ON DELETE CASCADE unless PRAGMA foreign_keys is on, so
-    // child rows are removed explicitly.
+    // child rows are removed explicitly. The subquery keeps the ownership check
+    // on the request delete too.
     await this.db.batch([
-      this.db.prepare("DELETE FROM webhook_tester_requests WHERE endpoint_id = ?").bind(endpointId),
-      this.db.prepare("DELETE FROM webhook_tester_endpoints WHERE id = ?").bind(endpointId),
+      this.db
+        .prepare(
+          `DELETE FROM webhook_tester_requests
+            WHERE endpoint_id IN (SELECT id FROM webhook_tester_endpoints WHERE id = ? AND user_id = ?)`,
+        )
+        .bind(endpointId, ownerId),
+      this.db
+        .prepare("DELETE FROM webhook_tester_endpoints WHERE id = ? AND user_id = ?")
+        .bind(endpointId, ownerId),
     ]);
   }
 
+  /** Global on purpose: two accounts cannot share one /hook/<slug> URL. */
   async slugExists(slug: string): Promise<boolean> {
     const row = await this.db
       .prepare("SELECT 1 AS hit FROM webhook_tester_endpoints WHERE slug = ? LIMIT 1")

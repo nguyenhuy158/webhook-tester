@@ -1,5 +1,7 @@
 export interface Endpoint {
   id: number | null;
+  /** Account that created the endpoint; only that account may see or change it. */
+  userId: number;
   name: string;
   slug: string;
   responseStatus: number;

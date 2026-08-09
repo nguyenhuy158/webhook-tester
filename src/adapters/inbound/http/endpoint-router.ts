@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import {
+  getClearRequestsUseCase,
   getCreateEndpointUseCase,
   getDeleteEndpointUseCase,
   getEndpointRepo,
   getListEndpointsUseCase,
-  getRequestRepo,
   getUpdateEndpointUseCase,
 } from "../../../config/dependencies";
 import type { AppContext } from "../../../config/env";
@@ -16,8 +16,16 @@ export const endpointRouter = new Hono<AppContext>();
 
 endpointRouter.use("*", requireApiUser);
 
+/** Every route below acts on behalf of exactly this account. */
+const owner = (c: { get: (key: "user") => { id: number | null } }): number => c.get("user").id!;
+
+function parseId(raw: string): number | null {
+  const id = Number.parseInt(raw, 10);
+  return Number.isNaN(id) ? null : id;
+}
+
 endpointRouter.get("/endpoints", async (c) => {
-  const endpoints = await getListEndpointsUseCase(c.env).execute(c.req.query("search") ?? "");
+  const endpoints = await getListEndpointsUseCase(c.env).execute(owner(c), c.req.query("search") ?? "");
   return c.json(
     endpoints.map((e) => ({
       id: e.id,
@@ -30,10 +38,11 @@ endpointRouter.get("/endpoints", async (c) => {
   );
 });
 
-// Registered before "/endpoints/:endpointId" routes so the literal path wins.
+// Registered before "/endpoints/:endpointId" so the literal path wins.
 endpointRouter.get("/endpoints/check-slug", async (c) => {
-  const slug = c.req.query("slug") ?? "";
-  const exists = await getEndpointRepo(c.env).slugExists(slug);
+  // Unscoped by design: slugs share one /hook/<slug> namespace, so a slug taken
+  // by another account is genuinely unavailable.
+  const exists = await getEndpointRepo(c.env).slugExists(c.req.query("slug") ?? "");
   return c.json({ available: !exists });
 });
 
@@ -46,7 +55,7 @@ endpointRouter.post("/endpoints", async (c) => {
   }
 
   try {
-    const endpoint = await getCreateEndpointUseCase(c.env).execute(name, slug);
+    const endpoint = await getCreateEndpointUseCase(c.env).execute({ ownerId: owner(c), name, slug });
     return c.json({ id: endpoint.id, name: endpoint.name, slug: endpoint.slug }, 201);
   } catch (error) {
     if (error instanceof SlugAlreadyExistsError) return c.json({ detail: error.message }, 409);
@@ -55,13 +64,14 @@ endpointRouter.post("/endpoints", async (c) => {
 });
 
 endpointRouter.put("/endpoints/:endpointId", async (c) => {
-  const endpointId = Number.parseInt(c.req.param("endpointId"), 10);
-  if (Number.isNaN(endpointId)) return c.json({ detail: "Invalid endpoint id" }, 422);
+  const endpointId = parseId(c.req.param("endpointId"));
+  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
 
   const body = await c.req.json<Record<string, unknown>>();
   try {
     const endpoint = await getUpdateEndpointUseCase(c.env).execute({
       endpointId,
+      ownerId: owner(c),
       responseStatus: Number(body.response_status ?? ENDPOINT_DEFAULTS.responseStatus),
       responseBody: String(body.response_body ?? ENDPOINT_DEFAULTS.responseBody),
       responseContentType: String(body.response_content_type ?? ENDPOINT_DEFAULTS.responseContentType),
@@ -75,11 +85,11 @@ endpointRouter.put("/endpoints/:endpointId", async (c) => {
 });
 
 endpointRouter.delete("/endpoints/:endpointId", async (c) => {
-  const endpointId = Number.parseInt(c.req.param("endpointId"), 10);
-  if (Number.isNaN(endpointId)) return c.json({ detail: "Invalid endpoint id" }, 422);
+  const endpointId = parseId(c.req.param("endpointId"));
+  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
 
   try {
-    await getDeleteEndpointUseCase(c.env).execute(endpointId);
+    await getDeleteEndpointUseCase(c.env).execute(endpointId, owner(c));
     return c.body(null, 204);
   } catch (error) {
     if (error instanceof EndpointNotFoundError) return c.json({ detail: error.message }, 404);
@@ -88,9 +98,14 @@ endpointRouter.delete("/endpoints/:endpointId", async (c) => {
 });
 
 endpointRouter.delete("/endpoints/:endpointId/requests", async (c) => {
-  const endpointId = Number.parseInt(c.req.param("endpointId"), 10);
-  if (Number.isNaN(endpointId)) return c.json({ detail: "Invalid endpoint id" }, 422);
+  const endpointId = parseId(c.req.param("endpointId"));
+  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
 
-  await getRequestRepo(c.env).deleteByEndpoint(endpointId);
-  return c.body(null, 204);
+  try {
+    await getClearRequestsUseCase(c.env).execute(endpointId, owner(c));
+    return c.body(null, 204);
+  } catch (error) {
+    if (error instanceof EndpointNotFoundError) return c.json({ detail: error.message }, 404);
+    throw error;
+  }
 });

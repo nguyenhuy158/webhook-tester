@@ -5,6 +5,9 @@
 
 CREATE TABLE IF NOT EXISTS webhook_tester_endpoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    -- Owner. Nullable only so the column could be added to an existing table;
+    -- every row created since the migration carries one.
+    user_id INTEGER REFERENCES webhook_tester_users(id),
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
     response_status INTEGER NOT NULL DEFAULT 200,
@@ -27,6 +30,9 @@ CREATE TABLE IF NOT EXISTS webhook_tester_requests (
 
 CREATE INDEX IF NOT EXISTS idx_webhook_tester_requests_endpoint
     ON webhook_tester_requests(endpoint_id, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_tester_endpoints_owner
+    ON webhook_tester_endpoints(user_id, created_at DESC);
 
 -- `password` is null for accounts created through Google, `google_sub` is null for
 -- accounts created with a password.

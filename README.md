@@ -33,6 +33,8 @@ them.
 ```sh
 pnpm install
 pnpm run db:remote                    # apply schema.sql to the shared D1
+# databases created before endpoint ownership also need:
+#   npx wrangler d1 execute db --remote --file=./migrations/0001_endpoint_owner.sql
 npx wrangler secret put SECRET_KEY    # required: JWT signing key
 pnpm run deploy
 ```
@@ -78,8 +80,11 @@ pnpm run dev            # http://localhost:8787
   `/hook/<slug>` responses carry `Content-Security-Policy: sandbox` and
   `X-Content-Type-Options: nosniff`. Returning `text/html` still works; it just
   cannot script against this origin.
-- **Endpoints are not yet scoped to their creator** — any signed-in user can see
-  every endpoint and its recorded requests.
+- **Endpoints belong to the account that created them.** Reads, writes, deletes
+  and the WebSocket feed are all filtered by owner, and another account's
+  endpoint answers 404 rather than 403, so its existence is not disclosed.
+  `/hook/<slug>` stays public — callers are not signed in — and slugs remain
+  unique across every account because they share one URL namespace.
 
 ## History
 
