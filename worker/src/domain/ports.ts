@@ -1,4 +1,4 @@
-import type { Endpoint, User, WebhookRequest } from "./entities";
+import type { Endpoint, ExternalIdentity, User, WebhookRequest } from "./entities";
 
 export interface EndpointRepository {
   findById(endpointId: number): Promise<Endpoint | null>;
@@ -19,8 +19,16 @@ export interface RequestRepository {
 export interface UserRepository {
   findByUsername(username: string): Promise<User | null>;
   findById(userId: number): Promise<User | null>;
+  findByGoogleSub(googleSub: string): Promise<User | null>;
   create(user: User): Promise<User>;
-  count(): Promise<number>;
+}
+
+/** Authorization-code flow against an external identity provider. */
+export interface ExternalAuthProvider {
+  /** URL the browser is sent to in order to start the flow. */
+  authorizationUrl(params: { redirectUri: string; state: string }): string;
+  /** Exchanges the returned code for the caller's identity. */
+  exchangeCode(params: { code: string; redirectUri: string }): Promise<ExternalIdentity>;
 }
 
 export interface AuthService {

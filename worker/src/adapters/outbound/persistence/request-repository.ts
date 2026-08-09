@@ -40,7 +40,7 @@ export class D1RequestRepository implements RequestRepository {
   async save(request: WebhookRequest): Promise<WebhookRequest> {
     const row = await this.db
       .prepare(
-        `INSERT INTO requests (endpoint_id, method, headers, body, query_params, remote_addr)
+        `INSERT INTO webhook_tester_requests (endpoint_id, method, headers, body, query_params, remote_addr)
          VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
       )
       .bind(
@@ -58,13 +58,13 @@ export class D1RequestRepository implements RequestRepository {
 
   async listByEndpoint(endpointId: number, limit = 50): Promise<WebhookRequest[]> {
     const { results } = await this.db
-      .prepare("SELECT * FROM requests WHERE endpoint_id = ? ORDER BY id DESC LIMIT ?")
+      .prepare("SELECT * FROM webhook_tester_requests WHERE endpoint_id = ? ORDER BY id DESC LIMIT ?")
       .bind(endpointId, limit)
       .all<RequestRow>();
     return results.map(toEntity);
   }
 
   async deleteByEndpoint(endpointId: number): Promise<void> {
-    await this.db.prepare("DELETE FROM requests WHERE endpoint_id = ?").bind(endpointId).run();
+    await this.db.prepare("DELETE FROM webhook_tester_requests WHERE endpoint_id = ?").bind(endpointId).run();
   }
 }

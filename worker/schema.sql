@@ -1,6 +1,9 @@
--- D1 schema for webhook-tester. Mirrors the Tortoise ORM models it replaces.
+-- D1 schema for webhook-tester.
+--
+-- The tables live in a D1 instance shared with other projects, so every name is
+-- prefixed with `webhook_tester_`.
 
-CREATE TABLE IF NOT EXISTS endpoints (
+CREATE TABLE IF NOT EXISTS webhook_tester_endpoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
@@ -11,9 +14,9 @@ CREATE TABLE IF NOT EXISTS endpoints (
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
-CREATE TABLE IF NOT EXISTS requests (
+CREATE TABLE IF NOT EXISTS webhook_tester_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    endpoint_id INTEGER NOT NULL REFERENCES endpoints(id) ON DELETE CASCADE,
+    endpoint_id INTEGER NOT NULL REFERENCES webhook_tester_endpoints(id) ON DELETE CASCADE,
     method TEXT NOT NULL,
     headers TEXT NOT NULL,
     body TEXT NOT NULL DEFAULT '',
@@ -22,10 +25,16 @@ CREATE TABLE IF NOT EXISTS requests (
     timestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_requests_endpoint ON requests(endpoint_id, id DESC);
+CREATE INDEX IF NOT EXISTS idx_webhook_tester_requests_endpoint
+    ON webhook_tester_requests(endpoint_id, id DESC);
 
-CREATE TABLE IF NOT EXISTS users (
+-- `password` is null for accounts created through Google, `google_sub` is null for
+-- accounts created with a password.
+CREATE TABLE IF NOT EXISTS webhook_tester_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
+    password TEXT,
+    email TEXT,
+    google_sub TEXT UNIQUE,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );

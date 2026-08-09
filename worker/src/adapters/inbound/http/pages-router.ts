@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { deleteCookie } from "hono/cookie";
 import { getEndpointRepo, getListEndpointsUseCase, getRequestRepo } from "../../../config/dependencies";
-import type { AppContext } from "../../../config/env";
+import { googleEnabled, type AppContext } from "../../../config/env";
 import { AUTH_COOKIE, requirePageUser } from "./middleware";
 import { endpointPage } from "./templates/endpoint";
 import { indexPage } from "./templates/index";
@@ -9,7 +9,9 @@ import { loginPage } from "./templates/login";
 
 export const pagesRouter = new Hono<AppContext>();
 
-pagesRouter.get("/login", (c) => c.html(loginPage()));
+pagesRouter.get("/login", (c) =>
+  c.html(loginPage({ googleEnabled: googleEnabled(c.env), error: c.req.query("error") })),
+);
 
 pagesRouter.get("/logout", (c) => {
   deleteCookie(c, AUTH_COOKIE, { path: "/" });

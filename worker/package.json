@@ -7,8 +7,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "db:local": "wrangler d1 execute webhook-tester --local --file=./schema.sql",
-    "db:remote": "wrangler d1 execute webhook-tester --remote --file=./schema.sql"
+    "db:local": "wrangler d1 execute db --local --file=./schema.sql",
+    "db:remote": "wrangler d1 execute db --remote --file=./schema.sql"
   },
   "dependencies": {
     "hono": "^4.6.14"

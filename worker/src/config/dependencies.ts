@@ -1,10 +1,21 @@
 import { D1EndpointRepository } from "../adapters/outbound/persistence/endpoint-repository";
 import { D1RequestRepository } from "../adapters/outbound/persistence/request-repository";
 import { D1UserRepository } from "../adapters/outbound/persistence/user-repository";
+import { GoogleAuthProvider } from "../adapters/outbound/security/google-auth-provider";
 import { WebCryptoAuthService } from "../adapters/outbound/security/jwt-service";
 import { DurableObjectBroadcaster } from "../adapters/outbound/ws/durable-object-broadcaster";
-import type { AuthService, EndpointRepository, RequestRepository, UserRepository } from "../domain/ports";
-import { AuthenticateUserUseCase, SeedDefaultUserUseCase } from "../domain/use-cases/auth";
+import type {
+  AuthService,
+  EndpointRepository,
+  ExternalAuthProvider,
+  RequestRepository,
+  UserRepository,
+} from "../domain/ports";
+import {
+  AuthenticateUserUseCase,
+  LoginWithExternalIdentityUseCase,
+  RegisterUserUseCase,
+} from "../domain/use-cases/auth";
 import {
   CreateEndpointUseCase,
   DeleteEndpointUseCase,
@@ -40,8 +51,18 @@ export const getDeleteEndpointUseCase = (env: Env) => new DeleteEndpointUseCase(
 export const getAuthUseCase = (env: Env) =>
   new AuthenticateUserUseCase(getUserRepo(env), getAuthService(env));
 
-export const getSeedDefaultUserUseCase = (env: Env) =>
-  new SeedDefaultUserUseCase(getUserRepo(env), getAuthService(env));
+export const getRegisterUserUseCase = (env: Env) =>
+  new RegisterUserUseCase(getUserRepo(env), getAuthService(env));
+
+export const getLoginWithExternalIdentityUseCase = (env: Env) =>
+  new LoginWithExternalIdentityUseCase(getUserRepo(env));
+
+export const getGoogleAuthProvider = (env: Env): ExternalAuthProvider => {
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    throw new Error("Google sign-in is not configured");
+  }
+  return new GoogleAuthProvider(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET);
+};
 
 export const getReceiveWebhookUseCase = (env: Env) =>
   new ReceiveWebhookUseCase(

@@ -8,16 +8,15 @@
     "enabled": true
   },
   "vars": {
-    "ALGORITHM": "HS256",
-    "ACCESS_TOKEN_EXPIRE_MINUTES": "1440",
-    "DEFAULT_USERNAME": "huy"
+    "ACCESS_TOKEN_EXPIRE_MINUTES": "1440"
   },
+  "routes": [{ "pattern": "hooks.huyab.click", "custom_domain": true }],
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "webhook-tester",
-      // Replace with the id printed by: wrangler d1 create webhook-tester
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+      // Shared with other projects, hence the webhook_tester_ table prefix.
+      "database_name": "db",
+      "database_id": "6eb9cfce-f6f3-4476-8e46-7c8e954d93c1"
     }
   ],
   "durable_objects": {

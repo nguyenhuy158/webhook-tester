@@ -1,6 +1,7 @@
 # Copy to .dev.vars for local development (wrangler dev reads it automatically).
-# In production set these as secrets:
-#   wrangler secret put SECRET_KEY
-#   wrangler secret put DEFAULT_PASSWORD
+# In production set these with `wrangler secret put <NAME>`.
 SECRET_KEY=dev-only-change-me
-DEFAULT_PASSWORD=huy
+
+# Optional: enables "Continue with Google" once both are set.
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
