@@ -1,13 +1,8 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+node_modules/
+.wrangler/
+.dev.vars
 .DS_Store
 .env
-venv/
-env/
-webhook.db
-instance/
 .idea/
 .vscode/
 .worktrees/
