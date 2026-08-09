@@ -25,7 +25,17 @@ webhookRouter.all("/hook/:slug", async (c) => {
     const result = await getReceiveWebhookUseCase(c.env).execute(c.req.param("slug"), incoming);
     return new Response(result.body, {
       status: result.status,
-      headers: { "Content-Type": result.contentType },
+      headers: {
+        "Content-Type": result.contentType,
+        // The body and its content type are chosen by whoever owns the endpoint,
+        // and this route shares an origin (and therefore cookies) with the
+        // dashboard. Without these, an endpoint returning text/html would run
+        // attacker script against the session of anyone who opened its URL.
+        // `sandbox` drops the response into an opaque origin, which keeps the
+        // mock-server behaviour intact while removing access to this one.
+        "Content-Security-Policy": "sandbox",
+        "X-Content-Type-Options": "nosniff",
+      },
     });
   } catch (error) {
     if (error instanceof EndpointNotFoundError) return c.text("Endpoint not found", 404);

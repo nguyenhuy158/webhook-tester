@@ -73,6 +73,11 @@ pnpm run dev            # http://localhost:8787
 - **Everything rendered from a request is escaped**, including values echoed into
   the DOM by client-side JavaScript.
 - **`CF-Connecting-IP`** supplies the caller's address.
+- **Webhook responses are sandboxed.** An endpoint's body and content type are
+  chosen by its owner and served from the same origin as the dashboard, so
+  `/hook/<slug>` responses carry `Content-Security-Policy: sandbox` and
+  `X-Content-Type-Options: nosniff`. Returning `text/html` still works; it just
+  cannot script against this origin.
 - **Endpoints are not yet scoped to their creator** — any signed-in user can see
   every endpoint and its recorded requests.
 
