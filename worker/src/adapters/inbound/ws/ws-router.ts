@@ -1,8 +1,6 @@
 import { Hono } from "hono";
-import { getCookie } from "hono/cookie";
-import { getAuthService } from "../../../config/dependencies";
 import type { AppContext } from "../../../config/env";
-import { AUTH_COOKIE } from "../http/middleware";
+import { resolveUser } from "../http/middleware";
 
 export const wsRouter = new Hono<AppContext>();
 
@@ -14,9 +12,8 @@ wsRouter.get("/ws/endpoint/:endpointId", async (c) => {
   const endpointId = Number.parseInt(c.req.param("endpointId"), 10);
   if (Number.isNaN(endpointId)) return c.text("Invalid endpoint id", 400);
 
-  // Same JWT-cookie check the HTTP routes use — the browser sends it on the handshake.
-  const token = getCookie(c, AUTH_COOKIE);
-  if (!token || (await getAuthService(c.env).decodeToken(token)) === null) {
+  // Same credentials the HTTP routes accept; the browser sends them on the handshake.
+  if (!(await resolveUser(c.env, c.req.raw))) {
     return c.text("Unauthorized", 401);
   }
 

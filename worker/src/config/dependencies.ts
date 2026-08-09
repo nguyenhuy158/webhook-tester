@@ -1,16 +1,10 @@
 import { D1EndpointRepository } from "../adapters/outbound/persistence/endpoint-repository";
 import { D1RequestRepository } from "../adapters/outbound/persistence/request-repository";
 import { D1UserRepository } from "../adapters/outbound/persistence/user-repository";
-import { GoogleAuthProvider } from "../adapters/outbound/security/google-auth-provider";
 import { WebCryptoAuthService } from "../adapters/outbound/security/jwt-service";
+import { SsoVerifier } from "../adapters/outbound/security/sso-verifier";
 import { DurableObjectBroadcaster } from "../adapters/outbound/ws/durable-object-broadcaster";
-import type {
-  AuthService,
-  EndpointRepository,
-  ExternalAuthProvider,
-  RequestRepository,
-  UserRepository,
-} from "../domain/ports";
+import type { AuthService, EndpointRepository, RequestRepository, UserRepository } from "../domain/ports";
 import {
   AuthenticateUserUseCase,
   LoginWithExternalIdentityUseCase,
@@ -38,6 +32,8 @@ export const getAuthService = (env: Env): AuthService => {
   return new WebCryptoAuthService(config.secretKey, config.accessTokenExpireMinutes);
 };
 
+export const getSsoVerifier = (env: Env): SsoVerifier => new SsoVerifier(settings(env).ssoIssuer);
+
 // ── Use case factories ────────────────────────────────────────────────────────
 
 export const getListEndpointsUseCase = (env: Env) => new ListEndpointsUseCase(getEndpointRepo(env));
@@ -56,13 +52,6 @@ export const getRegisterUserUseCase = (env: Env) =>
 
 export const getLoginWithExternalIdentityUseCase = (env: Env) =>
   new LoginWithExternalIdentityUseCase(getUserRepo(env));
-
-export const getGoogleAuthProvider = (env: Env): ExternalAuthProvider => {
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-    throw new Error("Google sign-in is not configured");
-  }
-  return new GoogleAuthProvider(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET);
-};
 
 export const getReceiveWebhookUseCase = (env: Env) =>
   new ReceiveWebhookUseCase(

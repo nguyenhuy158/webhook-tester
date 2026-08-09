@@ -27,18 +27,15 @@ npx wrangler secret put SECRET_KEY    # required: JWT signing key
 npm run deploy
 ```
 
-### Sign-in with Google (optional)
+### Sign-in with Google
 
-Create an OAuth client of type *Web application* in the Google Cloud console, add
-`https://hooks.huyab.click/auth/google/callback` as an authorized redirect URI, then:
+Handled by the shared SSO service at `auth.huyab.click`, which owns the only
+Google OAuth client on the domain. This app holds no Google credentials: it
+verifies the `huyab_sso` cookie against the issuer's public keys and provisions a
+local user the first time it sees a subject. See that service's
+`docs/INTEGRATION.md`.
 
-```sh
-npx wrangler secret put GOOGLE_CLIENT_ID
-npx wrangler secret put GOOGLE_CLIENT_SECRET
-```
-
-The "Continue with Google" button appears once both secrets are set, and the
-`/auth/google` routes answer 503 until then.
+Point `SSO_ISSUER` elsewhere in `wrangler.jsonc` to use a different issuer.
 
 ## Local development
 
@@ -54,7 +51,7 @@ npm run dev            # http://localhost:8787
 | --- | --- |
 | `GET /login`, `GET /logout` | login/register screen, cookie teardown |
 | `POST /auth/token`, `POST /auth/register`, `POST /auth/logout` | login, self-service signup, logout |
-| `GET /auth/google`, `GET /auth/google/callback` | Google OAuth authorization-code flow |
+| `GET /auth/sso`, `GET /auth/sso/logout` | hand off to the shared SSO service |
 | `GET /`, `GET /endpoint/:id` | dashboard and endpoint detail |
 | `GET/POST/PUT/DELETE /api/endpoints...` | endpoint CRUD, slug check, clear history |
 | `ALL /hook/:slug` | webhook receiver (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS) |
@@ -63,8 +60,8 @@ npm run dev            # http://localhost:8787
 ## Notes on behaviour differences
 
 - **No default user.** The FastAPI version seeded a `huy/huy` account at startup.
-  Accounts are now created by the visitor, either through `/auth/register` or by
-  signing in with Google.
+  Accounts are now created by the visitor, either through `/auth/register` or on
+  first arrival with a valid SSO cookie.
 - **Unauthenticated pages** redirect to `/login` instead of returning a 401 body.
 - **Response delay** is capped at 30s so a request cannot outlive the Worker.
 - **Request history** in the dashboard is escaped before being inserted into the DOM.

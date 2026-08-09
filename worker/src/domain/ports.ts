@@ -23,12 +23,9 @@ export interface UserRepository {
   create(user: User): Promise<User>;
 }
 
-/** Authorization-code flow against an external identity provider. */
-export interface ExternalAuthProvider {
-  /** URL the browser is sent to in order to start the flow. */
-  authorizationUrl(params: { redirectUri: string; state: string }): string;
-  /** Exchanges the returned code for the caller's identity. */
-  exchangeCode(params: { code: string; redirectUri: string }): Promise<ExternalIdentity>;
+/** Establishes the caller's identity from a credential issued elsewhere. */
+export interface ExternalIdentityVerifier {
+  verify(token: string): Promise<ExternalIdentity | null>;
 }
 
 export interface AuthService {
