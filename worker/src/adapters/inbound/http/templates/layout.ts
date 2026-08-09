@@ -305,6 +305,16 @@ const THEME_BUTTON = `<button class="btn btn-icon" onclick="toggleTheme()" title
 
 export const LOGO = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`;
 
+/**
+ * Served at /favicon.svg. The same waveform as the header logo, on a rounded
+ * square so it stays legible against either browser theme.
+ */
+export const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#0b0f14"/>
+  <path d="M28 16h-5l-4 11-7-22-4 11H4" fill="none" stroke="#3b82f6" stroke-width="2.6"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
 export function page(params: {
   title: string;
   maxWidth: string;
@@ -318,6 +328,10 @@ export function page(params: {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b0f14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.svg">
     <title>${esc(params.title)}</title>
     <style>
 ${TOKENS}${BASE}

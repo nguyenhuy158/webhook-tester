@@ -5,9 +5,20 @@ import { SSO_COOKIE, type AppContext } from "../../../config/env";
 import { AUTH_COOKIE, requirePageUser } from "./middleware";
 import { endpointPage } from "./templates/endpoint";
 import { indexPage } from "./templates/index";
+import { FAVICON_SVG } from "./templates/layout";
 import { loginPage } from "./templates/login";
 
 export const pagesRouter = new Hono<AppContext>();
+
+pagesRouter.get("/favicon.svg", (c) =>
+  c.body(FAVICON_SVG, 200, {
+    "Content-Type": "image/svg+xml",
+    "Cache-Control": "public, max-age=86400",
+  }),
+);
+
+// Browsers still probe this path; answering keeps it out of the error logs.
+pagesRouter.get("/favicon.ico", (c) => c.redirect("/favicon.svg", 301));
 
 pagesRouter.get("/login", (c) => c.html(loginPage({ error: c.req.query("error") })));
 
