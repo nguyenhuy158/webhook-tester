@@ -18,9 +18,20 @@ export interface AppVariables {
 
 export type AppContext = { Bindings: Env; Variables: AppVariables };
 
+/**
+ * Reads a required secret. There is deliberately no fallback: a checked-in default
+ * would let anyone forge tokens or log in if the secret were ever left unset.
+ */
+function required(value: string | undefined, name: string): string {
+  if (!value) {
+    throw new Error(`${name} is not configured. Set it with: wrangler secret put ${name}`);
+  }
+  return value;
+}
+
 export const settings = (env: Env) => ({
-  secretKey: env.SECRET_KEY ?? "change-me-in-production",
+  secretKey: required(env.SECRET_KEY, "SECRET_KEY"),
   accessTokenExpireMinutes: Number.parseInt(env.ACCESS_TOKEN_EXPIRE_MINUTES ?? "1440", 10),
   defaultUsername: env.DEFAULT_USERNAME ?? "huy",
-  defaultPassword: env.DEFAULT_PASSWORD ?? "huy",
+  defaultPassword: required(env.DEFAULT_PASSWORD, "DEFAULT_PASSWORD"),
 });

@@ -19,8 +19,8 @@ holds everything platform-specific.
 npm install
 npx wrangler d1 create webhook-tester      # copy the id into wrangler.jsonc
 npm run db:remote                          # apply schema.sql to the remote D1
-npx wrangler secret put SECRET_KEY         # JWT signing key
-npx wrangler secret put DEFAULT_PASSWORD   # password for the seeded first user
+npx wrangler secret put SECRET_KEY         # required: JWT signing key
+npx wrangler secret put DEFAULT_PASSWORD   # required: password for the seeded first user
 npm run deploy
 ```
 
@@ -51,3 +51,6 @@ npm run dev            # http://localhost:8787
 - **Response delay** is capped at 30s so a request cannot outlive the Worker.
 - **Request history** in the dashboard is escaped before being inserted into the DOM.
 - **`CF-Connecting-IP`** provides the client address in place of `request.client.host`.
+- **`SECRET_KEY` and `DEFAULT_PASSWORD` have no defaults.** Requests fail with a 500
+  until both are set, so a deployment can never fall back to a value published in
+  this repository.
