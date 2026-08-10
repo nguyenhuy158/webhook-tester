@@ -80,7 +80,7 @@ const BASE = `
     body {
         margin: 0 auto; padding: 16px;
         background: var(--bg); color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-family: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         font-size: 15px; line-height: 1.55;
     }
     /* Inheriting the font keeps every control at body size, below which iOS
@@ -332,6 +332,9 @@ export function page(params: {
     <meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <title>${esc(params.title)}</title>
     <style>
 ${TOKENS}${BASE}
