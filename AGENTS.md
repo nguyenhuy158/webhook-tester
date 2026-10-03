@@ -108,6 +108,18 @@ account that created them` or `fix: sandbox webhook responses`. Pull requests
 should include a short summary, typecheck results, linked issue if available,
 and screenshots for visible UI changes.
 
+## Ecosystem
+
+See the [huyab.click ecosystem map](https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md) for how all personal repos connect.
+
+- Kit packages: `@huyab/sso` (`verifySsoToken`, `ssoUrl`, `SSO_COOKIE` for
+  the huyab_sso cookie), `@huyab/e2e` (`startServer`, `run`, harness,
+  `assertLocalOnly` in `e2e/`), `@huyab/config` (Biome + tsconfig base),
+  reusable CI `nguyenhuy158/kit/.github/workflows/check.yml@v0.1.0`.
+- Talks to: sso (`auth.huyab.click` login/logout redirects and JWKS), shared
+  D1 `db` (`webhook_tester_` prefix). Called by any external system posting to
+  `/hook/<slug>`; mytools pings it for uptime.
+
 ## Agent-Specific Instructions
 
 Keep responses short and focused. If a requirement is unclear, ask before making
