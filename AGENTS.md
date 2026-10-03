@@ -44,12 +44,17 @@ them.
 - `pnpm install`: install project dependencies.
 - `pnpm dev`: run `wrangler dev` on `http://localhost:8787` (needs `.dev.vars`,
   copy from `.dev.vars.example`, and `pnpm db:local` once).
-- `pnpm typecheck`: run `tsc --noEmit`.
+- `pnpm check`: run `tsc --noEmit`.
+- `pnpm build`: bundle without deploying (`wrangler deploy --dry-run`, output
+  in `dist/`); catches bundling errors the typecheck misses.
+- `pnpm lint`: run `biome check .` (formatter + recommended lint rules).
+- `pnpm format`: run `biome format --write .`. Format only the files you touch;
+  do not mass-reformat unrelated code.
 - `pnpm db:local` / `pnpm db:remote`: apply `schema.sql` to the local/remote D1.
 - `pnpm deploy`: `wrangler deploy` from a laptop. Pushing to `main` deploys
   through Cloudflare Workers Builds.
 
-Use `pnpm` for all package commands.
+Use `pnpm` for all package commands (`pnpm exec wrangler ...`, never `npx`).
 
 ## Coding Style & Naming Conventions
 
@@ -76,7 +81,7 @@ Hexagonal boundaries:
 
 ## Testing Guidelines
 
-There is no automated test suite yet. Verify changes with `pnpm typecheck` and
+There is no automated test suite yet. Verify changes with `pnpm check` and
 by exercising the flow in `pnpm dev` (create an endpoint, send a request to
 `/hook/<slug>`, watch it arrive over the WebSocket feed). If tests are added,
 prefer Vitest with colocated `*.test.ts` files, starting with

@@ -34,8 +34,8 @@ them.
 pnpm install
 pnpm run db:remote                    # apply schema.sql to the shared D1
 # databases created before endpoint ownership also need:
-#   npx wrangler d1 execute db --remote --file=./migrations/0001_endpoint_owner.sql
-npx wrangler secret put SECRET_KEY    # required: JWT signing key
+#   pnpm exec wrangler d1 execute db --remote --file=./migrations/0001_endpoint_owner.sql
+pnpm exec wrangler secret put SECRET_KEY    # required: JWT signing key
 pnpm run deploy
 ```
 
