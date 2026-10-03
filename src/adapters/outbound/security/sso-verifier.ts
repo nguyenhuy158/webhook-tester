@@ -1,4 +1,5 @@
 import type { ExternalIdentity } from "../../../domain/entities";
+import { base64UrlDecode } from "./base64url";
 
 /**
  * Verifies the domain-wide session cookie issued by auth.huyab.click.
@@ -13,11 +14,6 @@ interface SsoClaims {
   email: string | null;
   name: string | null;
   exp: number;
-}
-
-function base64UrlDecode(value: string): Uint8Array {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
-  return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
 }
 
 export class SsoVerifier {

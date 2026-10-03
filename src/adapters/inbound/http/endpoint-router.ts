@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import {
   getClearRequestsUseCase,
   getCreateEndpointUseCase,
@@ -22,6 +22,26 @@ const owner = (c: { get: (key: "user") => { id: number | null } }): number => c.
 function parseId(raw: string): number | null {
   const id = Number.parseInt(raw, 10);
   return Number.isNaN(id) ? null : id;
+}
+
+/**
+ * Runs an action against the `:endpointId` in the path, mapping the two failures
+ * every such route shares: a malformed id (422) and an endpoint that is missing or
+ * owned by someone else (404).
+ */
+async function onOwnedEndpoint(
+  c: Context<AppContext>,
+  action: (endpointId: number, ownerId: number) => Promise<Response>,
+): Promise<Response> {
+  const endpointId = parseId(c.req.param("endpointId") ?? "");
+  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
+
+  try {
+    return await action(endpointId, owner(c));
+  } catch (error) {
+    if (error instanceof EndpointNotFoundError) return c.json({ detail: error.message }, 404);
+    throw error;
+  }
 }
 
 endpointRouter.get("/endpoints", async (c) => {
@@ -63,49 +83,31 @@ endpointRouter.post("/endpoints", async (c) => {
   }
 });
 
-endpointRouter.put("/endpoints/:endpointId", async (c) => {
-  const endpointId = parseId(c.req.param("endpointId"));
-  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
-
-  const body = await c.req.json<Record<string, unknown>>();
-  try {
+endpointRouter.put("/endpoints/:endpointId", (c) =>
+  onOwnedEndpoint(c, async (endpointId, ownerId) => {
+    const body = await c.req.json<Record<string, unknown>>();
     const endpoint = await getUpdateEndpointUseCase(c.env).execute({
       endpointId,
-      ownerId: owner(c),
+      ownerId,
       responseStatus: Number(body.response_status ?? ENDPOINT_DEFAULTS.responseStatus),
       responseBody: String(body.response_body ?? ENDPOINT_DEFAULTS.responseBody),
       responseContentType: String(body.response_content_type ?? ENDPOINT_DEFAULTS.responseContentType),
       delayMs: Number(body.delay_ms ?? ENDPOINT_DEFAULTS.delayMs),
     });
     return c.json({ id: endpoint.id, name: endpoint.name, slug: endpoint.slug });
-  } catch (error) {
-    if (error instanceof EndpointNotFoundError) return c.json({ detail: error.message }, 404);
-    throw error;
-  }
-});
+  }),
+);
 
-endpointRouter.delete("/endpoints/:endpointId", async (c) => {
-  const endpointId = parseId(c.req.param("endpointId"));
-  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
-
-  try {
-    await getDeleteEndpointUseCase(c.env).execute(endpointId, owner(c));
+endpointRouter.delete("/endpoints/:endpointId", (c) =>
+  onOwnedEndpoint(c, async (endpointId, ownerId) => {
+    await getDeleteEndpointUseCase(c.env).execute(endpointId, ownerId);
     return c.body(null, 204);
-  } catch (error) {
-    if (error instanceof EndpointNotFoundError) return c.json({ detail: error.message }, 404);
-    throw error;
-  }
-});
+  }),
+);
 
-endpointRouter.delete("/endpoints/:endpointId/requests", async (c) => {
-  const endpointId = parseId(c.req.param("endpointId"));
-  if (endpointId === null) return c.json({ detail: "Invalid endpoint id" }, 422);
-
-  try {
-    await getClearRequestsUseCase(c.env).execute(endpointId, owner(c));
+endpointRouter.delete("/endpoints/:endpointId/requests", (c) =>
+  onOwnedEndpoint(c, async (endpointId, ownerId) => {
+    await getClearRequestsUseCase(c.env).execute(endpointId, ownerId);
     return c.body(null, 204);
-  } catch (error) {
-    if (error instanceof EndpointNotFoundError) return c.json({ detail: error.message }, 404);
-    throw error;
-  }
-});
+  }),
+);

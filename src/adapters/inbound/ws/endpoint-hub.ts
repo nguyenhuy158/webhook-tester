@@ -1,6 +1,14 @@
 import { DurableObject } from "cloudflare:workers";
 
 /**
+ * The hub for one endpoint. The WebSocket route and the broadcaster must resolve
+ * the same Durable Object, so the naming scheme lives only here.
+ */
+export function endpointHubStub(namespace: DurableObjectNamespace, endpointId: number): DurableObjectStub {
+  return namespace.get(namespace.idFromName(`endpoint:${endpointId}`));
+}
+
+/**
  * Replaces the in-process ConnectionManager: a Worker is stateless, so the set of
  * live sockets for one endpoint lives in a Durable Object keyed by endpoint id.
  *

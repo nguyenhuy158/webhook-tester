@@ -1,4 +1,5 @@
 import type { AuthService } from "../../../domain/ports";
+import { base64UrlDecode, base64UrlEncode } from "./base64url";
 
 /**
  * WebCrypto replacement for the python-jose + passlib/bcrypt stack, which cannot
@@ -11,18 +12,6 @@ import type { AuthService } from "../../../domain/ports";
 const PBKDF2_ITERATIONS = 100_000;
 const PBKDF2_KEY_BITS = 256;
 const encoder = new TextEncoder();
-
-function base64UrlEncode(bytes: Uint8Array): string {
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function base64UrlDecode(value: string): Uint8Array {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
-  const binary = atob(padded);
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
-}
 
 /** Constant-time comparison, so verification does not leak byte positions via timing. */
 function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {

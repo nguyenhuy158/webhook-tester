@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getEndpointRepo } from "../../../config/dependencies";
 import type { AppContext } from "../../../config/env";
 import { resolveUser } from "../http/middleware";
+import { endpointHubStub } from "./endpoint-hub";
 
 export const wsRouter = new Hono<AppContext>();
 
@@ -24,7 +25,5 @@ wsRouter.get("/ws/endpoint/:endpointId", async (c) => {
     return c.text("Not found", 404);
   }
 
-  const namespace = c.env.ENDPOINT_HUB;
-  const stub = namespace.get(namespace.idFromName(`endpoint:${endpointId}`));
-  return stub.fetch(c.req.raw);
+  return endpointHubStub(c.env.ENDPOINT_HUB, endpointId).fetch(c.req.raw);
 });
