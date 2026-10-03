@@ -15,7 +15,9 @@
     "format": "biome format --write .",
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 execute db --local --file=./schema.sql",
-    "db:remote": "wrangler d1 execute db --remote --file=./schema.sql"
+    "db:remote": "wrangler d1 execute db --remote --file=./schema.sql",
+    "e2e": "node e2e/run.mjs",
+    "e2e:prod": "E2E_BASE_URL=https://hooks.huyab.click node e2e/readonly-smoke.mjs"
   },
   "dependencies": {
     "hono": "^4.6.14"

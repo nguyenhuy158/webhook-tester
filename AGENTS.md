@@ -31,6 +31,10 @@ src/
     outbound/ws/               #   Durable Object broadcaster for live request feed
 schema.sql                     # D1 schema (create-only; D1 is shared with other projects)
 migrations/                    # One-off SQL migrations for older databases
+e2e/                           # HTTP smoke suites (plain fetch, no browser)
+  run.mjs                      #   `pnpm e2e`: schema -> local D1, wrangler dev, both suites
+  readonly-smoke.mjs           #   GET-only checks, also run against prod (`pnpm e2e:prod`)
+  dev-smoke.mjs                #   Full flow that writes to the local D1; never against prod
 wrangler.jsonc                 # Worker config: D1 binding, Durable Object, custom domain
 .dev.vars.example              # Template for local secrets (copy to .dev.vars)
 ```
@@ -50,6 +54,10 @@ them.
 - `pnpm lint`: run `biome check .` (formatter + recommended lint rules).
 - `pnpm format`: run `biome format --write .`. Format only the files you touch;
   do not mass-reformat unrelated code.
+- `pnpm e2e`: apply `schema.sql` to the local D1, start `wrangler dev` on port
+  8791 (`E2E_PORT`), run both smoke suites, stop the server.
+- `pnpm e2e:prod`: run only the read-only suite against
+  <https://hooks.huyab.click>.
 - `pnpm db:local` / `pnpm db:remote`: apply `schema.sql` to the local/remote D1.
 - `pnpm deploy`: `wrangler deploy` from a laptop. Pushing to `main` deploys
   through Cloudflare Workers Builds.
@@ -81,11 +89,16 @@ Hexagonal boundaries:
 
 ## Testing Guidelines
 
-There is no automated test suite yet. Verify changes with `pnpm check` and
-by exercising the flow in `pnpm dev` (create an endpoint, send a request to
-`/hook/<slug>`, watch it arrive over the WebSocket feed). If tests are added,
-prefer Vitest with colocated `*.test.ts` files, starting with
-`src/domain/use-cases/`.
+Coverage is HTTP smoke in `e2e/`. `pnpm e2e` runs `readonly-smoke.mjs` (login
+page, anonymous redirects/401s, favicon, SSO hand-off) and `dev-smoke.mjs`
+(register, create an endpoint, hit `/hook/<slug>`, see the request on the
+endpoint page, update/clear/delete) against `wrangler dev`; CI runs it in the
+`e2e` job. `pnpm e2e:prod` runs only the read-only suite against production:
+GET requests only, no sign-up, nothing written. Keep any new prod check
+read-only; flows that write belong in `dev-smoke.mjs`. Also run `pnpm check`
+and `pnpm build`, and watch the WebSocket feed by hand in `pnpm dev` (the smoke
+does not open a socket). If unit tests are added, prefer Vitest with colocated
+`*.test.ts` files, starting with `src/domain/use-cases/`.
 
 ## Commit & Pull Request Guidelines
 
