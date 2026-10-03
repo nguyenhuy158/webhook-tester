@@ -23,11 +23,12 @@ src/
     ports.ts                   #   Repository / auth / broadcaster interfaces
     use-cases/                 #   auth.ts, endpoints.ts, webhooks.ts
   adapters/
-    inbound/http/              #   Hono routers (auth, endpoints API, pages, webhook receiver)
+    inbound/http/              #   Hono routers (auth, endpoints API, pages, webhook receiver);
+                               #   middleware.ts verifies the huyab_sso cookie with @huyab/sso
       templates/               #   Server-rendered HTML (layout, login, index, endpoint)
     inbound/ws/                #   WebSocket router + EndpointHub Durable Object
     outbound/persistence/      #   D1 repositories (webhook_tester_* tables)
-    outbound/security/         #   JWT (WebCrypto) + SSO cookie/JWKS verifier
+    outbound/security/         #   JWT (WebCrypto) for the local access_token session
     outbound/ws/               #   Durable Object broadcaster for live request feed
 schema.sql                     # D1 schema (create-only; D1 is shared with other projects)
 migrations/                    # One-off SQL migrations for older databases

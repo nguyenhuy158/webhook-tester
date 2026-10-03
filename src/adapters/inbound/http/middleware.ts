@@ -1,12 +1,8 @@
+import { SSO_COOKIE, verifySsoToken } from "@huyab/sso";
 import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
-import {
-  getAuthService,
-  getLoginWithExternalIdentityUseCase,
-  getSsoVerifier,
-  getUserRepo,
-} from "../../../config/dependencies";
-import { SSO_COOKIE, type AppContext, type Env } from "../../../config/env";
+import { getAuthService, getLoginWithExternalIdentityUseCase, getUserRepo } from "../../../config/dependencies";
+import { settings, type AppContext, type Env } from "../../../config/env";
 import type { User } from "../../../domain/entities";
 
 export const AUTH_COOKIE = "access_token";
@@ -32,8 +28,15 @@ export async function resolveUser(env: Env, request: Request): Promise<User | nu
 
   const ssoToken = read(SSO_COOKIE);
   if (ssoToken) {
-    const identity = await getSsoVerifier(env).verify(ssoToken);
-    if (identity) return getLoginWithExternalIdentityUseCase(env).execute(identity);
+    const claims = await verifySsoToken(ssoToken, settings(env).ssoIssuer);
+    if (claims) {
+      return getLoginWithExternalIdentityUseCase(env).execute({
+        // Namespaced so an SSO account can never collide with a local one.
+        subject: `sso:${claims.sub}`,
+        email: claims.email,
+        name: claims.name ?? null,
+      });
+    }
   }
 
   return null;

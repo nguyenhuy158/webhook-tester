@@ -1,7 +1,8 @@
+import { ssoUrl } from "@huyab/sso";
 import { Hono, type Context } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { getAuthService, getAuthUseCase, getRegisterUserUseCase } from "../../../config/dependencies";
-import { settings, SSO_COOKIE, type AppContext } from "../../../config/env";
+import { settings, type AppContext } from "../../../config/env";
 import type { User } from "../../../domain/entities";
 import {
   InvalidCredentialsError,
@@ -63,9 +64,7 @@ authRouter.post("/auth/register", async (c) => {
  */
 authRouter.get("/auth/sso", (c) => {
   const origin = new URL(c.req.url).origin;
-  const target = new URL(`${settings(c.env).ssoIssuer}/login`);
-  target.searchParams.set("redirect_uri", `${origin}/`);
-  return c.redirect(target.toString(), 302);
+  return c.redirect(ssoUrl(settings(c.env).ssoIssuer, "/login", `${origin}/`), 302);
 });
 
 authRouter.post("/auth/logout", requireApiUser, (c) => {
@@ -80,9 +79,5 @@ authRouter.post("/auth/logout", requireApiUser, (c) => {
 authRouter.get("/auth/sso/logout", (c) => {
   const origin = new URL(c.req.url).origin;
   deleteCookie(c, AUTH_COOKIE, { path: "/" });
-  const target = new URL(`${settings(c.env).ssoIssuer}/logout`);
-  target.searchParams.set("redirect_uri", `${origin}/login`);
-  return c.redirect(target.toString(), 302);
+  return c.redirect(ssoUrl(settings(c.env).ssoIssuer, "/logout", `${origin}/login`), 302);
 });
-
-export { SSO_COOKIE };

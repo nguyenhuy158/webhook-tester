@@ -2,7 +2,6 @@ import { D1EndpointRepository } from "../adapters/outbound/persistence/endpoint-
 import { D1RequestRepository } from "../adapters/outbound/persistence/request-repository";
 import { D1UserRepository } from "../adapters/outbound/persistence/user-repository";
 import { WebCryptoAuthService } from "../adapters/outbound/security/jwt-service";
-import { SsoVerifier } from "../adapters/outbound/security/sso-verifier";
 import { DurableObjectBroadcaster } from "../adapters/outbound/ws/durable-object-broadcaster";
 import type { AuthService, EndpointRepository, RequestRepository, UserRepository } from "../domain/ports";
 import {
@@ -32,8 +31,6 @@ export const getAuthService = (env: Env): AuthService => {
   const config = settings(env);
   return new WebCryptoAuthService(config.secretKey, config.accessTokenExpireMinutes);
 };
-
-export const getSsoVerifier = (env: Env): SsoVerifier => new SsoVerifier(settings(env).ssoIssuer);
 
 // ── Use case factories ────────────────────────────────────────────────────────
 

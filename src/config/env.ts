@@ -1,3 +1,4 @@
+import { DEFAULT_SSO_ISSUER } from "@huyab/sso";
 import type { User } from "../domain/entities";
 
 export interface Env {
@@ -16,9 +17,6 @@ export interface AppVariables {
 
 export type AppContext = { Bindings: Env; Variables: AppVariables };
 
-/** Cookie set by the SSO service for every *.huyab.click app. */
-export const SSO_COOKIE = "huyab_sso";
-
 /**
  * Reads a required secret. There is deliberately no fallback: a checked-in default
  * would let anyone forge tokens if the secret were ever left unset.
@@ -33,5 +31,5 @@ function required(value: string | undefined, name: string): string {
 export const settings = (env: Env) => ({
   secretKey: required(env.SECRET_KEY, "SECRET_KEY"),
   accessTokenExpireMinutes: Number.parseInt(env.ACCESS_TOKEN_EXPIRE_MINUTES ?? "1440", 10),
-  ssoIssuer: env.SSO_ISSUER ?? "https://auth.huyab.click",
+  ssoIssuer: env.SSO_ISSUER ?? DEFAULT_SSO_ISSUER,
 });

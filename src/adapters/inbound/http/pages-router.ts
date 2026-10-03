@@ -1,7 +1,8 @@
+import { SSO_COOKIE } from "@huyab/sso";
 import { Hono } from "hono";
 import { deleteCookie, getCookie } from "hono/cookie";
 import { getEndpointRepo, getListEndpointsUseCase, getRequestRepo } from "../../../config/dependencies";
-import { SSO_COOKIE, type AppContext } from "../../../config/env";
+import type { AppContext } from "../../../config/env";
 import { AUTH_COOKIE, requirePageUser } from "./middleware";
 import { endpointPage } from "./templates/endpoint";
 import { indexPage } from "./templates/index";

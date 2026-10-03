@@ -1,4 +1,4 @@
-import type { Endpoint, ExternalIdentity, User, WebhookRequest } from "./entities";
+import type { Endpoint, User, WebhookRequest } from "./entities";
 
 export interface EndpointRepository {
   /** Returns null when the endpoint belongs to somebody else, so callers cannot
@@ -25,11 +25,6 @@ export interface UserRepository {
   findById(userId: number): Promise<User | null>;
   findByGoogleSub(googleSub: string): Promise<User | null>;
   create(user: User): Promise<User>;
-}
-
-/** Establishes the caller's identity from a credential issued elsewhere. */
-export interface ExternalIdentityVerifier {
-  verify(token: string): Promise<ExternalIdentity | null>;
 }
 
 export interface AuthService {
