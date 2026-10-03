@@ -32,10 +32,10 @@ src/
     outbound/ws/               #   Durable Object broadcaster for live request feed
 schema.sql                     # D1 schema (create-only; D1 is shared with other projects)
 migrations/                    # One-off SQL migrations for older databases
-e2e/                           # HTTP smoke suites (plain fetch, no browser)
+e2e/                           # HTTP smoke suites (plain fetch, no browser; harness from @huyab/e2e)
   run.mjs                      #   `pnpm e2e`: schema -> local D1, wrangler dev, both suites
   readonly-smoke.mjs           #   GET-only checks, also run against prod (`pnpm e2e:prod`)
-  dev-smoke.mjs                #   Full flow that writes to the local D1; never against prod
+  dev-smoke.mjs                #   Full flow that writes to the local D1; assertLocalOnly, never against prod
 wrangler.jsonc                 # Worker config: D1 binding, Durable Object, custom domain
 .dev.vars.example              # Template for local secrets (copy to .dev.vars)
 ```

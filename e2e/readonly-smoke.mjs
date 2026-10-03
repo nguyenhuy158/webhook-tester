@@ -1,7 +1,7 @@
 // Read-only smoke: GET requests only, no sign-up, no form submit, nothing
 // written. Safe against production (`pnpm e2e:prod`, hooks.huyab.click);
 // `pnpm e2e` runs it first against the local server so dev and prod share it.
-import { assert, BASE, expectStatus, finish, request, test } from "./harness.mjs";
+import { assert, BASE, expectStatus, finish, request, test } from "@huyab/e2e";
 
 const SSO_ISSUER = "https://auth.huyab.click";
 

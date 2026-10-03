@@ -1,9 +1,9 @@
 // Dev-only smoke: walks the main flow end to end and WRITES to the local D1
 // (registers an account, creates an endpoint, records requests). Never point
 // this at production; `pnpm e2e` runs it against `wrangler dev` only.
-import { assert, BASE, expectStatus, finish, request, test } from "./harness.mjs";
+import { assert, assertLocalOnly, BASE, expectStatus, finish, request, test } from "@huyab/e2e";
 
-assert(!BASE.startsWith("https://"), `dev smoke writes data; refusing to run against ${BASE}`);
+assertLocalOnly();
 
 const run = `e2e${Date.now().toString(36)}`;
 const slug = `${run}-hook`;
