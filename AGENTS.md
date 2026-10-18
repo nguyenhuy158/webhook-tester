@@ -30,7 +30,7 @@ src/
     outbound/persistence/      #   D1 repositories (webhook_tester_* tables)
     outbound/security/         #   JWT (WebCrypto) for the local access_token session
     outbound/ws/               #   Durable Object broadcaster for live request feed
-schema.sql                     # D1 schema (create-only; D1 is shared with other projects)
+migrations/                    # D1 migrations (create-only; D1 is shared), history in webhook_tester_migrations
 migrations/                    # One-off SQL migrations for older databases
 e2e/                           # HTTP smoke suites (plain fetch, no browser; harness from @huyab/e2e)
   run.mjs                      #   `pnpm e2e`: schema -> local D1, wrangler dev, both suites
@@ -41,7 +41,7 @@ wrangler.jsonc                 # Worker config: D1 binding, Durable Object, cust
 ```
 
 The D1 database is shared with other projects: every table carries the
-`webhook_tester_` prefix and `schema.sql` only ever creates tables, never drops
+`webhook_tester_` prefix and migrations only ever create tables, never drop
 them.
 
 ## Build, Test, and Development Commands
@@ -55,11 +55,11 @@ them.
 - `pnpm lint`: run `biome check .` (formatter + recommended lint rules).
 - `pnpm format`: run `biome format --write .`. Format only the files you touch;
   do not mass-reformat unrelated code.
-- `pnpm e2e`: apply `schema.sql` to the local D1, start `wrangler dev` on port
+- `pnpm e2e`: apply `migrations/` to the local D1, start `wrangler dev` on port
   8791 (`E2E_PORT`), run both smoke suites, stop the server.
 - `pnpm e2e:prod`: run only the read-only suite against
   <https://hooks.huyab.click>.
-- `pnpm db:local` / `pnpm db:remote`: apply `schema.sql` to the local/remote D1.
+- `pnpm db:local` / `pnpm db:remote`: apply pending `migrations/` to the local/remote D1.
 - `pnpm deploy`: `wrangler deploy` from a laptop. Pushing to `main` deploys
   through Cloudflare Workers Builds.
 

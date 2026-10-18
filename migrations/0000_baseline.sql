@@ -1,13 +1,8 @@
--- D1 schema for webhook-tester.
---
--- The tables live in a D1 instance shared with other projects, so every name is
--- prefixed with `webhook_tester_`.
+-- Baseline: the webhook_tester_* schema as it runs in production on 2026-10-18.
+-- IF NOT EXISTS makes it a no-op there; on a fresh local D1 it creates the schema.
 
 CREATE TABLE IF NOT EXISTS webhook_tester_endpoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    -- Owner. Nullable only so the column could be added to an existing table;
-    -- every row created since the migration carries one.
-    user_id INTEGER REFERENCES webhook_tester_users(id),
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
     response_status INTEGER NOT NULL DEFAULT 200,
@@ -15,7 +10,7 @@ CREATE TABLE IF NOT EXISTS webhook_tester_endpoints (
     response_content_type TEXT NOT NULL DEFAULT 'application/json',
     delay_ms INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-);
+, user_id INTEGER REFERENCES webhook_tester_users(id));
 
 CREATE TABLE IF NOT EXISTS webhook_tester_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,14 +23,6 @@ CREATE TABLE IF NOT EXISTS webhook_tester_requests (
     timestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_webhook_tester_requests_endpoint
-    ON webhook_tester_requests(endpoint_id, id DESC);
-
-CREATE INDEX IF NOT EXISTS idx_webhook_tester_endpoints_owner
-    ON webhook_tester_endpoints(user_id, created_at DESC);
-
--- `password` is null for accounts created through Google, `google_sub` is null for
--- accounts created with a password.
 CREATE TABLE IF NOT EXISTS webhook_tester_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -44,3 +31,9 @@ CREATE TABLE IF NOT EXISTS webhook_tester_users (
     google_sub TEXT UNIQUE,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_webhook_tester_endpoints_owner
+    ON webhook_tester_endpoints(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_tester_requests_endpoint
+    ON webhook_tester_requests(endpoint_id, id DESC);

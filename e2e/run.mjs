@@ -1,4 +1,4 @@
-// One-command E2E: apply schema.sql to the local D1 -> start `wrangler dev`
+// One-command E2E: apply the D1 migrations locally -> start `wrangler dev`
 // -> run the read-only smoke, then the dev smoke -> stop the server.
 //
 // Environment:
@@ -14,8 +14,8 @@ const E2E_SECRET_KEY = "e2e-local-secret";
 let failed = false;
 let server;
 try {
-  await run("pnpm", ["exec", "wrangler", "d1", "execute", "db", "--local", "--file=./schema.sql"], {
-    label: "D1 schema",
+  await run("pnpm", ["exec", "wrangler", "d1", "migrations", "apply", "db", "--local"], {
+    label: "D1 migrations",
   });
   server = await startServer({
     command: "pnpm",
