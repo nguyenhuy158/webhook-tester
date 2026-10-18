@@ -25,16 +25,14 @@ from the runtime; `src/adapters` holds everything platform-specific.
 | UI | server-rendered templates, no build step, no client dependencies |
 
 The D1 instance is shared with other projects, so every table carries the
-`webhook_tester_` prefix and `schema.sql` only ever creates tables, never drops
+`webhook_tester_` prefix and migrations only ever create tables, never drop
 them.
 
 ## Setup
 
 ```sh
 pnpm install
-pnpm run db:remote                    # apply schema.sql to the shared D1
-# databases created before endpoint ownership also need:
-#   pnpm exec wrangler d1 execute db --remote --file=./migrations/0001_endpoint_owner.sql
+pnpm run db:remote                    # apply pending migrations/ to the shared D1
 pnpm exec wrangler secret put SECRET_KEY    # required: JWT signing key
 pnpm run deploy
 ```
