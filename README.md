@@ -1,9 +1,9 @@
 # Webhook Tester
 
 Self-hosted webhook inspector on Cloudflare Workers, live at
-<https://hooks.huyab.click>.
+<https://hooks.huyab.cfd>.
 
-Create an endpoint, point any system at `https://hooks.huyab.click/hook/<slug>`,
+Create an endpoint, point any system at `https://hooks.huyab.cfd/hook/<slug>`,
 and watch requests arrive live — method, headers, body, query params and caller
 IP. Each endpoint replies with the status code, content type, body and delay you
 configure, so it doubles as a mock server.
@@ -66,7 +66,7 @@ pnpm run dev            # http://localhost:8787
   and is provisioned on first sight.
 - **`SECRET_KEY` has no default.** Requests fail with a 500 until it is set, so a
   deployment can never fall back to a value published here.
-- **Sign-in with Google** belongs to the SSO service at `auth.huyab.click`, which
+- **Sign-in with Google** belongs to the SSO service at `auth.huyab.cfd`, which
   owns the only Google OAuth client on the domain. This app holds no Google
   credentials. Point `SSO_ISSUER` in `wrangler.jsonc` elsewhere to change issuer.
 - **The response delay is capped at 30s**, so a request cannot outlive the Worker.
