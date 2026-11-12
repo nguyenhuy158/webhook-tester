@@ -1,9 +1,9 @@
 # Webhook Tester
 
 Self-hosted webhook inspector on Cloudflare Workers, live at
-<https://hooks.huyab.cfd>.
+<https://hooktest.huyab.cfd>.
 
-Create an endpoint, point any system at `https://hooks.huyab.cfd/hook/<slug>`,
+Create an endpoint, point any system at `https://hooktest.huyab.cfd/hook/<slug>`,
 and watch requests arrive live — method, headers, body, query params and caller
 IP. Each endpoint replies with the status code, content type, body and delay you
 configure, so it doubles as a mock server.

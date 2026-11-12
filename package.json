@@ -17,7 +17,7 @@
     "db:local": "wrangler d1 migrations apply db --local",
     "db:remote": "wrangler d1 migrations apply db --remote",
     "e2e": "node e2e/run.mjs",
-    "e2e:prod": "E2E_BASE_URL=https://hooks.huyab.cfd node e2e/readonly-smoke.mjs"
+    "e2e:prod": "E2E_BASE_URL=https://hooktest.huyab.cfd node e2e/readonly-smoke.mjs"
   },
   "dependencies": {
     "@huyab/sso": "github:nguyenhuy158/kit#v0.2.0&path:packages/sso",
