@@ -11,7 +11,7 @@
     "ACCESS_TOKEN_EXPIRE_MINUTES": "1440"
   },
   "workers_dev": false,
-  "routes": [{ "pattern": "hooks.huyab.cfd", "custom_domain": true }],
+  "routes": [{ "pattern": "hooktest.huyab.cfd", "custom_domain": true }],
   "d1_databases": [
     {
       "binding": "DB",

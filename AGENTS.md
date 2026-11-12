@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 
 Webhook Tester: a self-hosted webhook inspector on a single Cloudflare Worker
-(Hono), live at <https://hooks.huyab.cfd>. The UI is server-rendered HTML
+(Hono), live at <https://hooktest.huyab.cfd>. The UI is server-rendered HTML
 templates with no build step and no client dependencies. Code is structured as
 a hexagon (ports & adapters): `src/domain/` holds entities, ports and use cases
 and imports nothing from the runtime; `src/adapters/` holds everything
@@ -58,7 +58,7 @@ them.
 - `pnpm e2e`: apply `migrations/` to the local D1, start `wrangler dev` on port
   8791 (`E2E_PORT`), run both smoke suites, stop the server.
 - `pnpm e2e:prod`: run only the read-only suite against
-  <https://hooks.huyab.cfd>.
+  <https://hooktest.huyab.cfd>.
 - `pnpm db:local` / `pnpm db:remote`: apply pending `migrations/` to the local/remote D1.
 - `pnpm deploy`: `wrangler deploy` from a laptop. Pushing to `main` deploys
   through Cloudflare Workers Builds.
