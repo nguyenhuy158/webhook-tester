@@ -38,3 +38,8 @@ export interface AuthService {
 export interface WebSocketBroadcaster {
   broadcast(endpointId: number, data: unknown): Promise<void>;
 }
+
+export interface HealthCheck {
+  /** Resolves when the storage answers; rejects otherwise. */
+  ping(): Promise<void>;
+}

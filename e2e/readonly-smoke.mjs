@@ -47,6 +47,22 @@ await test("SSO sign-in hands off to the issuer", async () => {
   );
 });
 
+await test("/api/version reports the deployed build", async () => {
+  const response = await request("/api/version");
+  expectStatus(response, 200);
+  const body = await response.json();
+  assert(typeof body.commit === "string" && body.commit.length > 0, "commit is empty");
+  assert(typeof body.shortCommit === "string" && body.shortCommit.length > 0, "shortCommit is empty");
+  assert(typeof body.branch === "string" && body.branch.length > 0, "branch is empty");
+  assert(typeof body.builtAt === "string" && body.builtAt.length > 0, "builtAt is empty");
+});
+
+await test("/api/health is ok", async () => {
+  const response = await request("/api/health");
+  expectStatus(response, 200);
+  assert((await response.json()).ok === true, "ok is not true");
+});
+
 await test("unknown path is a 404", async () => {
   expectStatus(await request("/e2e-no-such-page"), 404);
 });

@@ -1,9 +1,10 @@
+import { D1HealthCheck } from "../adapters/outbound/persistence/d1-health-check";
 import { D1EndpointRepository } from "../adapters/outbound/persistence/endpoint-repository";
 import { D1RequestRepository } from "../adapters/outbound/persistence/request-repository";
 import { D1UserRepository } from "../adapters/outbound/persistence/user-repository";
 import { WebCryptoAuthService } from "../adapters/outbound/security/jwt-service";
 import { DurableObjectBroadcaster } from "../adapters/outbound/ws/durable-object-broadcaster";
-import type { AuthService, EndpointRepository, RequestRepository, UserRepository } from "../domain/ports";
+import type { AuthService, EndpointRepository, HealthCheck, RequestRepository, UserRepository } from "../domain/ports";
 import {
   AuthenticateUserUseCase,
   LoginWithExternalIdentityUseCase,
@@ -26,6 +27,8 @@ export const getEndpointRepo = (env: Env): EndpointRepository => new D1EndpointR
 export const getRequestRepo = (env: Env): RequestRepository => new D1RequestRepository(env.DB);
 
 export const getUserRepo = (env: Env): UserRepository => new D1UserRepository(env.DB);
+
+export const getHealthCheck = (env: Env): HealthCheck => new D1HealthCheck(env.DB);
 
 export const getAuthService = (env: Env): AuthService => {
   const config = settings(env);
