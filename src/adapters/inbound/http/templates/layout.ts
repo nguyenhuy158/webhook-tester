@@ -106,7 +106,7 @@ const BASE = `
         padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border);
     }
     .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .brand svg { flex-shrink: 0; color: var(--accent); }
+    .brand img { flex-shrink: 0; border-radius: 6px; }
 
     .card {
         background: var(--surface); border: 1px solid var(--border);
@@ -303,17 +303,7 @@ const THEME_BUTTON = `<button class="btn btn-icon" onclick="toggleTheme()" title
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>`;
 
-export const LOGO = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`;
-
-/**
- * Served at /favicon.svg. The same waveform as the header logo, on a rounded
- * square so it stays legible against either browser theme.
- */
-export const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0b0f14"/>
-  <path d="M28 16h-5l-4 11-7-22-4 11H4" fill="none" stroke="#3b82f6" stroke-width="2.6"
-        stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
+export const LOGO = `<img src="/icon-192.png" width="24" height="24" alt="">`;
 
 export function page(params: {
   title: string;
@@ -331,7 +321,8 @@ export function page(params: {
     <meta name="theme-color" content="#0b0f14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
